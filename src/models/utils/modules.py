@@ -59,8 +59,8 @@ class Attention(nn.Module):
         self.use_sdpa = use_sdpa
 
     def forward(self, x, mask=None):
-        B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        B, N, C = x.shape # C is dim
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)  # [B, num_heads, N, D]
         q, k, v = qkv[0], qkv[1], qkv[2]  # [B, num_heads, N, D]
 
         if self.use_sdpa:
@@ -71,8 +71,8 @@ class Attention(nn.Module):
             attn = (q @ k.transpose(-2, -1)) * self.scale  # [B, num_heads, D, D]
             attn = attn.softmax(dim=-1)
             attn = self.attn_drop(attn)
-            x = (attn @ v)
-        x = x.transpose(1, 2).reshape(B, N, C)
+            x = (attn @ v) # [B, num_heads, N, D]
+        x = x.transpose(1, 2).reshape(B, N, C) # [B, N, num_heads, D] -> [B, N, num_heads * D] == [B, N, C]
         x = self.proj(x)
         x = self.proj_drop(x)
         return x, attn
