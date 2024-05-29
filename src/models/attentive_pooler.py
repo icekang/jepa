@@ -180,6 +180,8 @@ class AttentiveSegmentator(nn.Module):
         self.uniform_power = uniform_power
         self.decoder_embed = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=True)
 
+        self.num_classes = num_classes
+
         self.num_patches = (
             (num_frames // tubelet_size)
             * (img_size // patch_size)
@@ -204,7 +206,7 @@ class AttentiveSegmentator(nn.Module):
             for i in range(depth)])
 
         self.norm = norm_layer(decoder_embed_dim)
-        self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * num_classes, bias=True) # decoder to patch
+        self.decoder_pred = nn.Linear(decoder_embed_dim, tubelet_size*patch_size**2 * num_classes, bias=True) # decoder to patch
 
         # ------ initialize weights
         self._init_pos_embed(self.pos_embed.data)  # sincos pos-embed
@@ -267,9 +269,6 @@ class AttentiveSegmentator(nn.Module):
 
         if pos_embed is not None:
             x += pos_embed
-        
-
-
 
         # Fwd prop
         outs = []
