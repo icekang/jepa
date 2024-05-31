@@ -1,0 +1,52 @@
+# Reproducibility
+seed: 0
+
+# WandB
+wandb:
+  wandb_run_id: null
+  wandb_run_name: fold_0_freeze_enc
+  wandb_project_name: GenesisFinetuneTest
+  # logs_path: /home/gridsan/nchutisilp/datasets/ModelGenesisOutputs/ModelGenesisNNUNetFinetuningV2_noNorm/LogsBCEAugUniform
+  # logs_path: logs # Bizon
+
+# Data
+data:
+  fold: 0 # should change when doing different folds
+  # data_directory: /home/gridsan/nchutisilp/datasets/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/ # SuperCloud
+  data_directory: /storage_bizon/naravich/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/ # Bizon
+  patch_size: [224, 224, 16]
+  queue_max_length: 300
+  samples_per_volume: 20 # 375 / 16 ~ 20. Note: if this is too low, it would be the one determining the batch size
+  num_workers: 2
+  batch_size: 16 # might be overridden by the samples_per_volume, the it is too low
+
+# Train
+train:
+  max_epochs: 2000
+  patience: 100
+
+# Pre-trained
+# pre_trained_weight_path: /home/gridsan/nchutisilp/datasets/ModelGenesisOutputs/ModelGenesisNNUNetPretrainingV2_noNorm/Genesis_OCT_Best.pt # SuperCloud
+# pre_trained_weight_path: /storage_bizon/naravich/ModelGenesisNNUNetPretrainingV2_noNorm/Genesis_OCT_Best.pt # Bizon
+pre_trained_weight_path: /storage_bizon/naravich/ModelGenesisNNUNetPretrainingV2_noNorm/renamed_key_Genesis_OCT_Best.pt # Bizon
+
+# Model
+model:
+  freeze_encoder: False
+
+# Optimizer
+optimizer:
+  learning_rate: 2
+  momentum: 0.9
+  weight_decay: 0.0
+  nesterov: False
+  scheduler_step_size: 60
+  scheduler_gamma: 0.5
+
+# nnUNet architecutre
+nnUNet:
+  dataset_name_or_id: "302"
+  configuration: 3d_fullres
+  trainer_name: nnUNetTrainer
+  plans_identifier: nnUNetPlans
+  fold: 0 # any fold would do
