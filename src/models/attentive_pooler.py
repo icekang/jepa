@@ -262,6 +262,7 @@ class AttentiveSegmentator(nn.Module):
         assert D == self.encoder_embed_dim, f'Input feature dim {D} does not match model encoder dim {self.encoder_embed_dim}'
 
         x = self.decoder_embed(x)
+        x = torch.nn.functional.gelu(x)
         # Tokenize input
         pos_embed = self.pos_embed
         # if pos_embed is not None:
@@ -275,7 +276,7 @@ class AttentiveSegmentator(nn.Module):
         for i, blk in enumerate(self.decoder_blocks):
             x = blk(x)
 
-        x = self.norm(x)    
+        x = self.norm(x)
         x = self.decoder_pred(x)
 
         return x

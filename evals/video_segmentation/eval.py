@@ -136,6 +136,10 @@ def main(args_eval, resume_preempt=False):
     log_file = os.path.join(folder, f'{tag}_r{rank}.csv')
     latest_path = os.path.join(folder, f'{tag}-latest.pth.tar')
     test_prediction_path = os.path.join(folder, f'{tag}-predictions')
+    train_visualization_folder = os.path.join(folder, 'visualization')
+
+    if not os.path.exists(train_visualization_folder):
+        os.makedirs(train_visualization_folder, exist_ok=True)
     if not os.path.exists(test_prediction_path):
         os.makedirs(test_prediction_path, exist_ok=True)
 
@@ -145,7 +149,6 @@ def main(args_eval, resume_preempt=False):
     csv_logger = CSVLogger(
         log_file,
         ('%d', 'epoch'),
-        ('%d', 'itr'),
         ('%.5f', 'train-dice'),
         ('%.5f', 'val-dice'),
     )
@@ -262,7 +265,7 @@ def main(args_eval, resume_preempt=False):
             data_loader=train_loader,
             use_bfloat16=use_bfloat16,
             freeze_encoder=freeze_encoder,
-            vis_suffix=f'train_{epoch}')
+            vis_prefix=f'{train_visualization_folder}/train_{epoch}')
 
         val_dice = run_one_epoch(
             device=device,
@@ -276,9 +279,9 @@ def main(args_eval, resume_preempt=False):
             data_loader=val_loader,
             use_bfloat16=use_bfloat16,
             freeze_encoder=freeze_encoder,
-            vis_suffix=f'val_{epoch}')
+            vis_prefix=f'{train_visualization_folder}/val_{epoch}')
 
-        logger.info('[%5d] train: %.3f%% test: %.3f%%' % (epoch + 1, train_dice, val_dice))
+        logger.info('[Epoch %5d] train: %.3f%% test: %.3f%%' % (epoch + 1, train_dice, val_dice))
         if rank == 0:
             csv_logger.log(epoch + 1, train_dice, val_dice)
         save_checkpoint(epoch + 1)
@@ -319,16 +322,17 @@ def run_one_epoch(
     data_loader,
     use_bfloat16: bool,
     freeze_encoder: bool,
-    vis_suffix=''):
+    vis_prefix=''):
     if freeze_encoder:
         encoder.train(mode=False)
     else:
         encoder.train(mode=training)
     decoder.train(mode=training)
-    criterion_ce = torch.nn.CrossEntropyLoss()
-    criterion_dice = smp_losses.DiceLoss('multiclass', from_logits=True, smooth=1.0)
-    criterion = lambda y_pred, y_gt: 0.25 * criterion_ce(y_pred, y_gt) + 0.75 * criterion_dice(y_pred, y_gt.reshape(y_gt.shape[0], -1))
+    criterion_ce = torch.nn.CrossEntropyLoss(weight=torch.tensor([0.25, 0.75]).to(device=device))
+    criterion_dice = smp_losses.DiceLoss('multiclass', from_logits=True, smooth=1e-5, ignore_index=0)
+    criterion = lambda y_pred, y_gt: 0.5 * criterion_ce(y_pred, y_gt) + 0.5 * criterion_dice(y_pred, y_gt.reshape(y_gt.shape[0], -1))
     dice_meter = Dice(num_classes=decoder.module.num_classes, ignore_index=0).to(device=device)
+    has_vised = False
     for itr, data in enumerate(data_loader):
 
         if training:
@@ -364,35 +368,51 @@ def run_one_epoch(
             outputs shape = B * N_token * (T * P * P * C)
             output.reshape(B, T, H, W)
             '''
-            y_pred = outputs.reshape(B, N_T, N_H, N_W, encoder.module.tubelet_size, encoder.module.patch_size, encoder.module.patch_size, N_CLASS)
+            y_pred = outputs.reshape(B, N_T, N_H, N_W, -1)
+            y_pred = y_pred.reshape(B, N_T, N_H, N_W, encoder.module.tubelet_size, encoder.module.patch_size, encoder.module.patch_size, N_CLASS)
             # (B, N_T, N_H, N_W, ts, ps, ps, c)
             # (0,   1,   2,   3,  4,  5,  6, 7)
             # to
             # (B,   c, N_T,  ts, N_H,ps,N_W,ps)
             # (0,   7,   1,   4,   2, 5,  3, 6)
             y_pred = y_pred.permute(0, 7, 1, 4, 2, 5, 3, 6)
+            # (B, c, T, H, W)
             y_pred = y_pred.reshape(B, N_CLASS, N_T * encoder.module.tubelet_size, N_H * encoder.module.patch_size, N_W * encoder.module.patch_size)
 
             loss = criterion(y_pred, y)
 
             with torch.no_grad():
+                seg = torch.argmax(y_pred, dim=1).detach().cpu()
+                print('seg min, max', seg.min(), seg.max(), seg.sum())
+                # print('Positive prediction', seg.sum())
+                # print('label min, max', y.detach().min(), y.detach().max())
+                # print('label positive prediction', y.detach().sum())
+                # print("Pred type", y_pred.dtype, "label type", y.dtype)
+
+            with torch.no_grad():
                 dice_meter.update(F.softmax(y_pred, dim=1), y)
 
-        if vis_suffix:
+        if vis_prefix and not has_vised:
             import matplotlib.pyplot as plt
+            # print("data['image'].shape", data['image'].shape)
+            # print("data['label'][0]", data['label'].shape)
+            # print("y_pred.detach().cpu().shape", y_pred.detach().cpu().shape)
+            # print("torch.argmax(y_pred[0].detach().cpu(), dim=0, keepdim=True)", torch.argmax(y_pred[0].detach().cpu(), dim=0, keepdim=True).shape)
+
             visualize = tio.Subject(
                 image1 = tio.ScalarImage(tensor=data['image'][0]),
-                gt1 = tio.LabelMap(tensor=data['label'][0]),
-                pred1 = tio.LabelMap(tensor=torch.argmax(y_pred[0])),
+                gt1 = tio.LabelMap(tensor=data['label'][0].unsqueeze(0)),
+                pred1 = tio.LabelMap(tensor=torch.argmax(y_pred[0].detach().cpu(), dim=0, keepdim=True)),
                 image2 = tio.ScalarImage(tensor=data['image'][1]),
-                gt2 = tio.LabelMap(tensor=data['label'][1]),
-                pred2 = tio.LabelMap(tensor=torch.argmax(y_pred[1])),
+                gt2 = tio.LabelMap(tensor=data['label'][1].unsqueeze(0)),
+                pred2 = tio.LabelMap(tensor=torch.argmax(y_pred[1].detach().cpu(), dim=0,  keepdim=True)),
             )
             visualize.plot()
-            plt.savefig(f'vis_{vis_suffix}.png')
+            plt.savefig(f'{vis_prefix}_vis.png')
             plt.close('all')
             plt.clf()
             plt.cla()
+            has_vised = True
 
         if training:
             if use_bfloat16:
@@ -408,7 +428,7 @@ def run_one_epoch(
             optimizer.zero_grad()
 
         if itr % 20 == 0:
-            logger.info('[%5d] %.3f%% (loss: %.3f) [mem: %.2e]'
+            logger.info('[Iteration %5d] %.3f%% (loss: %.3f) [mem: %.2e]'
                         % (itr, dice_meter.compute().item(), loss,
                            torch.cuda.max_memory_allocated() / 1024.**2))
     return dice_meter.compute()
