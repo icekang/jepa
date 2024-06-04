@@ -1,0 +1,42 @@
+nodes: 8
+tasks_per_node: 8
+tag: calcium_oct_linear_probe
+eval_name: video_segmentation
+resume_checkpoint: false
+data:
+  fold: 0 # should change when doing different folds
+  data_directory: /home/gridsan/nchutisilp/datasets/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/ # SuperCloud
+  # data_directory: /storage_bizon/naravich/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/ # Bizon
+  patch_size: [224, 224, 16]
+  queue_max_length: 300
+  samples_per_volume: 20 # 375 / 16 ~ 20. Note: if this is too low, it would be the one determining the batch size
+  num_workers: 8
+  num_classes: 2
+  batch_size: 16 # might be overridden by the samples_per_volume, the it is too low
+optimization:
+  num_epochs: 2001
+  resolution: 224
+  batch_size: 4
+  weight_decay: 0.01
+  lr: 0.0001
+  start_lr: 0.001
+  final_lr: 0.0
+  warmup: 0.
+  use_bfloat16: true
+  freeze_encoder: false
+decoder:
+  depth: 0
+pretrain:
+  model_name: vit_large
+  checkpoint_key: target_encoder
+  clip_duration: null
+  frames_per_clip: 16
+  tubelet_size: 2
+  uniform_power: true
+  use_silu: false
+  tight_silu: false
+  use_sdpa: true
+  patch_size: 16
+  folder: /home/gridsan/nchutisilp/projects/jepa/pretrain_models
+  checkpoint: jepa-latest.pth.tar  # name of pretrained model file inside folder
+  write_tag: jepa

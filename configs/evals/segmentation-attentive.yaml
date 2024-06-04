@@ -1,6 +1,6 @@
 nodes: 8
 tasks_per_node: 8
-tag: calcium_oct
+tag: calcium_oct_attentive
 eval_name: video_segmentation
 resume_checkpoint: false
 data:
@@ -18,12 +18,14 @@ optimization:
   resolution: 224
   batch_size: 4
   weight_decay: 0.01
-  lr: 0.001
+  lr: 0.0001
   start_lr: 0.001
   final_lr: 0.0
   warmup: 0.
   use_bfloat16: true
   freeze_encoder: false
+decoder:
+  depth: 1
 pretrain:
   model_name: vit_large
   checkpoint_key: target_encoder

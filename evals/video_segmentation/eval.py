@@ -105,6 +105,10 @@ def main(args_eval, resume_preempt=False):
     use_bfloat16 = args_opt.get('use_bfloat16')
     freeze_encoder = args_opt.get('freeze_encoder')
 
+    # -- DECODER
+    args_dec = args_eval.get('decoder')
+    decoder_depth = args_dec.get('depth')
+
     # -- EXPERIMENT-ID/TAG (optional)
     resume_checkpoint = args_eval.get('resume_checkpoint', False) or resume_preempt
     eval_tag = args_eval.get('tag', None)
@@ -474,7 +478,17 @@ def run_test_whole_volumne(
                 outputs = encoder(x)
                 outputs = decoder(outputs)
 
-                y_pred = outputs.reshape(B, N_CLASS, N_T * encoder.module.tubelet_size, N_H * encoder.module.patch_size, N_W * encoder.module.patch_size)
+                y_pred = outputs.reshape(B, N_T, N_H, N_W, -1)
+                y_pred = y_pred.reshape(B, N_T, N_H, N_W, encoder.module.tubelet_size, encoder.module.patch_size, encoder.module.patch_size, N_CLASS)
+                # (B, N_T, N_H, N_W, ts, ps, ps, c)
+                # (0,   1,   2,   3,  4,  5,  6, 7)
+                # to
+                # (B,   c, N_T,  ts, N_H,ps,N_W,ps)
+                # (0,   7,   1,   4,   2, 5,  3, 6)
+                y_pred = y_pred.permute(0, 7, 1, 4, 2, 5, 3, 6)
+                # (B, c, T, H, W)
+                y_pred = y_pred.reshape(B, N_CLASS, N_T * encoder.module.tubelet_size, N_H * encoder.module.patch_size, N_W * encoder.module.patch_size)
+
                 y_pred = y_pred.argmax(dim=1, keepdim=True)
                 y_pred = y_pred.permute(0, 1, 3, 4, 2)
                 y = y.permute(0, 2, 3, 1).unsqueeze(dim=1)
