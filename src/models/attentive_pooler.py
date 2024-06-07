@@ -162,7 +162,7 @@ class AttentiveSegmentator(nn.Module):
         init_std=0.02,
         uniform_power=False,
         num_classes=100,
-        mutli_features=False,
+        multi_features=False,
     ):
         super().__init__()
 
@@ -206,8 +206,8 @@ class AttentiveSegmentator(nn.Module):
                 norm_layer=norm_layer)
             for i in range(depth)])
         
-        self.mutli_features = mutli_features
-        if self.mutli_features:
+        self.multi_features = multi_features
+        if self.multi_features:
             # Segformer inspired decode head
             self.linear_fuse = nn.Conv3d(
                 in_channels=self.encoder_embed_dim*4,
@@ -267,7 +267,7 @@ class AttentiveSegmentator(nn.Module):
         """
         :param x: input image/video
         """
-        if self.mutli_features:
+        if self.multi_features:
             x = self.forward_multi_features(x) # [B, N, D]
 
         B, N, D = x.shape

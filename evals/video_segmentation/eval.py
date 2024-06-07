@@ -109,6 +109,7 @@ def main(args_eval, resume_preempt=False):
     # -- DECODER
     args_dec = args_eval.get('decoder')
     decoder_depth = args_dec.get('depth')
+    multi_features = args_dec.get('multi_features', False)
 
     # -- EXPERIMENT-ID/TAG (optional)
     resume_checkpoint = args_eval.get('resume_checkpoint', False) or resume_preempt
@@ -176,6 +177,13 @@ def main(args_eval, resume_preempt=False):
         tight_SiLU=tight_SiLU,
         use_sdpa=use_sdpa,
         load_weight=load_weight)
+
+    if multi_features:
+        # Make encoders outputs feature maps at difference depth
+        encoder_depth = len(encoder.blocks)
+        out_layers = [i for i in range(encoder_depth - 1, 0, -encoder_depth // 4)]
+        encoder.out_layers = out_layers
+
     if freeze_encoder:
         encoder.eval()
         for p in encoder.parameters():
@@ -198,6 +206,7 @@ def main(args_eval, resume_preempt=False):
         norm_layer=LayerNorm,
         init_std=0.02, 
         num_classes=num_classes, 
+        multi_features=multi_features,
     ).to(device)
 
     # -- init data-loaders/samplers
