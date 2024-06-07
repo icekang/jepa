@@ -162,6 +162,7 @@ class AttentiveSegmentator(nn.Module):
         init_std=0.02,
         uniform_power=False,
         num_classes=100,
+        mutli_features=False,
     ):
         super().__init__()
 
@@ -204,6 +205,16 @@ class AttentiveSegmentator(nn.Module):
                 attn_drop=attn_drop_rate,
                 norm_layer=norm_layer)
             for i in range(depth)])
+        
+        self.mutli_features = mutli_features
+        if self.mutli_features:
+            # Segformer inspired decode head
+            self.linear_fuse = nn.Conv3d(
+                in_channels=self.encoder_embed_dim*4,
+                out_channels=self.encoder_embed_dim,
+                kernel_size=1,
+            )
+            self.fuse_norm = norm_layer(self.encoder_embed_dim)
 
         self.norm = norm_layer(decoder_embed_dim)
         self.decoder_pred = nn.Linear(decoder_embed_dim, tubelet_size*patch_size**2 * num_classes, bias=True) # decoder to patch
@@ -256,6 +267,8 @@ class AttentiveSegmentator(nn.Module):
         """
         :param x: input image/video
         """
+        if self.mutli_features:
+            x = self.forward_multi_features(x) # [B, N, D]
 
         B, N, D = x.shape
 
@@ -272,7 +285,6 @@ class AttentiveSegmentator(nn.Module):
             x += pos_embed
 
         # Fwd prop
-        outs = []
         for i, blk in enumerate(self.decoder_blocks):
             x = blk(x)
 
@@ -280,3 +292,24 @@ class AttentiveSegmentator(nn.Module):
         x = self.decoder_pred(x)
 
         return x
+
+    def forward_multi_features(self, x):
+        """
+        :param x: input image/video
+        """
+        features = x
+        x = features[-1] # last feature map
+        assert isinstance(features, list), 'AttentiveSegmentator requires list of features for multi-feature decoding'
+        assert len(features) == 4, 'AttentiveSegmentator requires 4 features for multi-feature decoding'
+
+        N_T = self.num_frames // self.tubelet_size
+        N_H = self.input_size // self.patch_size
+        N_W = self.input_size // self.patch_size
+
+        reshaped_features = [feature.reshape(-1, N_T, N_H, N_W, self.encoder_embed_dim) for feature in features]
+        reshaped_features = torch.cat(reshaped_features, dim=-1) # [B, N_T, N_H, N_W, encoder_embed_dim*4]
+        reshaped_features = reshaped_features.permute(0, 4, 1, 2, 3) # [B, encoder_embed_dim*4, N_T, N_H, N_W]
+        fused_features = self.linear_fuse(reshaped_features)
+        fused_features = self.fuse_norm(fused_features)
+        fused_features = fused_features.permute(0, 2, 3, 4, 1).reshape(-1, N_T*N_H*N_W, self.encoder_embed_dim)
+        return fused_features
