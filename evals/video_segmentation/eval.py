@@ -83,6 +83,7 @@ def main(args_eval, resume_preempt=False):
     tight_SiLU = args_pretrain.get('tight_silu', True)
     uniform_power = args_pretrain.get('uniform_power', False)
     pretrained_path = os.path.join(pretrain_folder, ckp_fname)
+    load_weight = args_pretrain.get('load_weight', True)
     # Optional [for Video model]:
     tubelet_size = args_pretrain.get('tubelet_size', 2)
     pretrain_frames_per_clip = args_pretrain.get('frames_per_clip', 1)
@@ -173,7 +174,8 @@ def main(args_eval, resume_preempt=False):
         checkpoint_key=checkpoint_key,
         use_SiLU=use_SiLU,
         tight_SiLU=tight_SiLU,
-        use_sdpa=use_sdpa)
+        use_sdpa=use_sdpa,
+        load_weight=load_weight)
     if freeze_encoder:
         encoder.eval()
         for p in encoder.parameters():
@@ -294,8 +296,7 @@ def main(args_eval, resume_preempt=False):
     data_module.setup('test')
     test_loaders, test_grid_samplers = data_module.test_dataloader()
     dice_scores = []
-    index = 0
-    for test_loader, test_grid_sampler in zip(test_loaders, test_grid_samplers):
+    for test_loader, test_grid_sampler, index in zip(test_loaders, test_grid_samplers, range(len(test_loaders))):
         prediction_aggregator = tio.inference.GridAggregator(test_grid_sampler)
         label_aggregator = tio.inference.GridAggregator(test_grid_sampler)
         dice_score = run_test_whole_volumne(
@@ -308,10 +309,10 @@ def main(args_eval, resume_preempt=False):
             use_bfloat16=use_bfloat16,
             save_prediction_prefix=str(os.path.join(test_prediction_path, f'index_{index}'))
             )
-        print(dice_score)
+        print(dice_score.item())
         dice_scores.append(dice_score)
     dice_score = dice_score.mean()
-    logger.info('[0] Test: %.3f%%' % (dice_score))
+    logger.info(f'[0] Test: {dice_score}')
     
 
 def run_one_epoch(
@@ -615,7 +616,8 @@ def init_model(
     use_SiLU=False,
     tight_SiLU=True,
     uniform_power=False,
-    checkpoint_key='target_encoder'
+    checkpoint_key='target_encoder',
+    load_weight=True,
 ):
     encoder = vit.__dict__[model_name](
         img_size=crop_size,
@@ -629,7 +631,10 @@ def init_model(
     )
 
     encoder.to(device)
-    encoder = load_pretrained(encoder=encoder, pretrained=pretrained, checkpoint_key=checkpoint_key)
+    if load_weight:
+        encoder = load_pretrained(encoder=encoder, pretrained=pretrained, checkpoint_key=checkpoint_key)
+    else:
+        logger.info('Not loading pre-trained weight')
     return encoder
 
 def load_pretrained(
