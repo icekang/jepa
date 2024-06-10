@@ -209,6 +209,10 @@ class AttentiveSegmentator(nn.Module):
         self.multi_features = multi_features
         if self.multi_features:
             # Segformer inspired decode head
+            self.linear_projs = nn.ModuleList([
+                nn.Linear(self.encoder_embed_dim, self.encoder_embed_dim)
+                for i in range(4)
+            ])
             self.linear_fuse = nn.Conv3d(
                 in_channels=self.encoder_embed_dim*4,
                 out_channels=self.encoder_embed_dim,
@@ -302,6 +306,8 @@ class AttentiveSegmentator(nn.Module):
         assert isinstance(features, list), 'AttentiveSegmentator requires list of features for multi-feature decoding'
         assert len(features) == 4, 'AttentiveSegmentator requires 4 features for multi-feature decoding'
 
+        features = [linear_proj(feature) for linear_proj, feature in zip(self.linear_projs, features)]
+
         N_T = self.num_frames // self.tubelet_size
         N_H = self.input_size // self.patch_size
         N_W = self.input_size // self.patch_size
@@ -309,7 +315,9 @@ class AttentiveSegmentator(nn.Module):
         reshaped_features = [feature.reshape(-1, N_T, N_H, N_W, self.encoder_embed_dim) for feature in features]
         reshaped_features = torch.cat(reshaped_features, dim=-1) # [B, N_T, N_H, N_W, encoder_embed_dim*4]
         reshaped_features = reshaped_features.permute(0, 4, 1, 2, 3) # [B, encoder_embed_dim*4, N_T, N_H, N_W]
+
         fused_features = self.linear_fuse(reshaped_features)
-        fused_features = self.fuse_norm(fused_features)
         fused_features = fused_features.permute(0, 2, 3, 4, 1).reshape(-1, N_T*N_H*N_W, self.encoder_embed_dim)
+
+        fused_features = self.fuse_norm(fused_features)
         return fused_features

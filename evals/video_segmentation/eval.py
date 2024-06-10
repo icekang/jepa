@@ -105,6 +105,7 @@ def main(args_eval, resume_preempt=False):
     warmup = args_opt.get('warmup')
     use_bfloat16 = args_opt.get('use_bfloat16')
     freeze_encoder = args_opt.get('freeze_encoder')
+    loss_weight = args_opt.get('loss_weight', None)
 
     # -- DECODER
     args_dec = args_eval.get('decoder')
@@ -208,6 +209,7 @@ def main(args_eval, resume_preempt=False):
         num_classes=num_classes, 
         multi_features=multi_features,
     ).to(device)
+    print(decoder)
 
     # -- init data-loaders/samplers
     data_module = KFoldNNUNetSegmentationDataModule(args_eval)
@@ -280,7 +282,8 @@ def main(args_eval, resume_preempt=False):
             data_loader=train_loader,
             use_bfloat16=use_bfloat16,
             freeze_encoder=freeze_encoder,
-            vis_prefix=f'{train_visualization_folder}/train_{epoch}')
+            vis_prefix=f'{train_visualization_folder}/train_{epoch}',
+            loss_weight=loss_weight)
 
         val_dice = run_one_epoch(
             device=device,
@@ -294,7 +297,8 @@ def main(args_eval, resume_preempt=False):
             data_loader=val_loader,
             use_bfloat16=use_bfloat16,
             freeze_encoder=freeze_encoder,
-            vis_prefix=f'{train_visualization_folder}/val_{epoch}')
+            vis_prefix=f'{train_visualization_folder}/val_{epoch}',
+            loss_weight=loss_weight)
 
         logger.info('[Epoch %5d] train: %.3f%% test: %.3f%%' % (epoch + 1, train_dice, val_dice))
         if rank == 0:
@@ -322,7 +326,29 @@ def main(args_eval, resume_preempt=False):
         dice_scores.append(dice_score)
     dice_score = dice_score.mean()
     logger.info(f'[0] Test: {dice_score}')
+
+import torch
+import segmentation_models_pytorch.losses as smp_losses
+
+def compose_loss_functions(device, loss_weight={'cross_entropy': 0.5, 'focal': 0, 'dice': 0.5}):
+    assert any(weight > 0 for weight in loss_weight.values()), f'At least one loss weight must be non-zero! {loss_weight}'
     
+    criterion_ce = torch.nn.CrossEntropyLoss(weight=torch.tensor([0.25, 0.75]).to(device=device))
+    criterion_focal = smp_losses.FocalLoss('multiclass', normalized=True, ignore_index=0)
+    criterion_dice = smp_losses.DiceLoss('multiclass', from_logits=True, smooth=1e-5, ignore_index=0)
+
+    def final_criterion(y_pred, y_gt):
+        total_loss = 0
+        if loss_weight['cross_entropy'] > 0:
+            total_loss += loss_weight['cross_entropy'] * criterion_ce(y_pred, y_gt)
+        if loss_weight['focal'] > 0:
+            total_loss += loss_weight['focal'] * criterion_focal(y_pred, y_gt)
+        if loss_weight['dice'] > 0:
+            total_loss += loss_weight['dice'] * criterion_dice(y_pred, y_gt.reshape(y_gt.shape[0], -1))
+        return total_loss
+
+    return final_criterion
+
 
 def run_one_epoch(
     device,
@@ -336,15 +362,19 @@ def run_one_epoch(
     data_loader,
     use_bfloat16: bool,
     freeze_encoder: bool,
-    vis_prefix=''):
+    vis_prefix='',
+    loss_weight=None):
     if freeze_encoder:
         encoder.train(mode=False)
     else:
         encoder.train(mode=training)
     decoder.train(mode=training)
-    criterion_ce = torch.nn.CrossEntropyLoss(weight=torch.tensor([0.25, 0.75]).to(device=device))
-    criterion_dice = smp_losses.DiceLoss('multiclass', from_logits=True, smooth=1e-5, ignore_index=0)
-    criterion = lambda y_pred, y_gt: 0.5 * criterion_ce(y_pred, y_gt) + 0.5 * criterion_dice(y_pred, y_gt.reshape(y_gt.shape[0], -1))
+
+    if loss_weight is None:
+        criterion = compose_loss_functions(device)
+    else:
+        criterion = compose_loss_functions(device, loss_weight)
+
     dice_meter = Dice(num_classes=decoder.module.num_classes, ignore_index=0).to(device=device)
     has_vised = False
     for itr, data in enumerate(data_loader):
@@ -395,13 +425,12 @@ def run_one_epoch(
 
             loss = criterion(y_pred, y)
 
-            with torch.no_grad():
-                seg = torch.argmax(y_pred, dim=1).detach().cpu()
-                print('seg min, max', seg.min(), seg.max(), seg.sum())
-                # print('Positive prediction', seg.sum())
-                # print('label min, max', y.detach().min(), y.detach().max())
-                # print('label positive prediction', y.detach().sum())
-                # print("Pred type", y_pred.dtype, "label type", y.dtype)
+            # with torch.no_grad():
+            #     seg = torch.argmax(y_pred, dim=1).detach().cpu()
+            #     # print('Positive prediction', seg.sum())
+            #     # print('label min, max', y.detach().min(), y.detach().max())
+            #     # print('label positive prediction', y.detach().sum())
+            #     # print("Pred type", y_pred.dtype, "label type", y.dtype)
 
             with torch.no_grad():
                 dice_meter.update(F.softmax(y_pred, dim=1), y)

@@ -48,10 +48,13 @@ class KFoldNNUNetSegmentationDataModule(torch.nn.Module):
             # trainSampler = tio.data.UniformSampler(
             #     patch_size=self.config['data']['patch_size'],
             # )
+            label_probabilities = {0: 1, 1: 15}
+            if 'train_sampling_probability' in self.config['data']:
+                label_probabilities = {k:v for k, v in enumerate(self.config['data']['train_sampling_probability'])}
             trainSampler = tio.data.LabelSampler(
                 patch_size=self.config['data']['patch_size'],
                 label_name='label',
-                label_probabilities={0: 1, 1: 15},
+                label_probabilities=label_probabilities,
             )
             self.patchesTrainSet = tio.Queue(
                 subjects_dataset=self.trainSet,
@@ -140,17 +143,30 @@ class KFoldNNUNetSegmentationDataModule(torch.nn.Module):
 
     def getAugmentationTransform(self):
         H, W, D = self.config['data']['patch_size']
-        augment = tio.Compose([
-            tio.Pad((H // 2, W // 2, D // 2)),
-            tio.RandomFlip(axes=(0, 1, 2), flip_probability=0.2),
-            tio.RandomAffine(scales=(0.7, 1.4), degrees=0, isotropic=True, translation=0, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
-            tio.RandomAffine(scales=0, degrees=(0, 0, 180) , isotropic=True, translation=0, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
-            tio.RandomAffine(scales=0, degrees=0 , isotropic=True, translation=60, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
-            tio.transforms.RandomAnisotropy(axes=(0, 1, 2), downsampling=(1, 1.5), scalars_only=True, p=0.2, image_interpolation='bspline'),
-            tio.transforms.RandomBlur(std=(0.5, 1.), p=0.2), # Like nnUNet
-            tio.RandomNoise(mean=0, std=(0, 0.1), p=0.1), # Like nnUNet
-            tio.transforms.RandomGamma(log_gamma=(0.7, 1.5), p=0.1),
-        ])
+        if 'augmentation' not in self.config['data']:
+            augment = tio.Compose([
+                tio.Pad((H // 2, W // 2, D // 2)),
+                tio.RandomFlip(axes=(0, 1, 2), flip_probability=0.2),
+                tio.RandomAffine(scales=(0.7, 1.4), degrees=0, isotropic=True, translation=0, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
+                tio.RandomAffine(scales=0, degrees=(0, 0, 180) , isotropic=True, translation=0, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
+                tio.RandomAffine(scales=0, degrees=0 , isotropic=True, translation=60, center='image', default_pad_value=0, p=0.2, image_interpolation='bspline'),
+                tio.transforms.RandomAnisotropy(axes=(0, 1, 2), downsampling=(1, 1.5), scalars_only=True, p=0.2, image_interpolation='bspline'),
+                tio.transforms.RandomBlur(std=(0.5, 1.), p=0.2), # Like nnUNet
+                tio.RandomNoise(mean=0, std=(0, 0.1), p=0.1), # Like nnUNet
+                tio.transforms.RandomGamma(log_gamma=(0.7, 1.5), p=0.1),
+            ])
+        else:
+            augment = tio.Compose([
+                tio.Pad((H // 2, W // 2, D // 2)),
+                tio.RandomFlip(axes=(0, 1, 2), flip_probability=self.config['data']['augmentation']['flip']),
+                tio.RandomAffine(scales=(0.7, 1.4), degrees=0, isotropic=True, translation=0, center='image', default_pad_value=0, p=self.config['data']['augmentation']['affine'], image_interpolation='bspline'),
+                tio.RandomAffine(scales=0, degrees=(0, 0, 180) , isotropic=True, translation=0, center='image', default_pad_value=0, p=self.config['data']['augmentation']['affine'], image_interpolation='bspline'),
+                tio.RandomAffine(scales=0, degrees=0 , isotropic=True, translation=60, center='image', default_pad_value=0, p=self.config['data']['augmentation']['affine'], image_interpolation='bspline'),
+                tio.transforms.RandomAnisotropy(axes=(0, 1, 2), downsampling=(1, 1.5), scalars_only=True, p=self.config['data']['augmentation']['anisotropy'], image_interpolation='bspline'),
+                tio.transforms.RandomBlur(std=(0.5, 1.), p=self.config['data']['augmentation']['blur']), # Like nnUNet
+                tio.RandomNoise(mean=0, std=(0, 0.1), p=self.config['data']['augmentation']['noise']), # Like nnUNet
+                tio.transforms.RandomGamma(log_gamma=(0.7, 1.5), p=self.config['data']['augmentation']['gamma']),
+            ])
         return augment
 
     def _filesToSubject(self, imageFiles: List[Path], labelFiles: List[Path]) -> List[tio.Subject]:
