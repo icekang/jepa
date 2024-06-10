@@ -84,6 +84,16 @@ class KFoldNNUNetSegmentationDataModule(torch.nn.Module):
                 shuffle_subjects=False,
                 shuffle_patches=False,
             )
+        if stage == 'val_whole':
+            valImages, valLabels = self._getImagesAndLabels('val')
+
+            valSubjects = self._filesToSubject(valImages, valLabels)
+            self.valSubjectGridSamplers = [tio.inference.GridSampler(
+                subject=valSubject,
+                patch_size=self.config['data']['patch_size'],
+                patch_overlap=(0 for _ in self.config['data']['patch_size'])) for valSubject in valSubjects]
+            self.valSubjects = [tio.inference.GridAggregator(gridSampler) for gridSampler in self.valSubjectGridSamplers]
+
 
         if stage == 'test':
             testImages, testLabels = self._getImagesAndLabels('test')
@@ -131,6 +141,9 @@ class KFoldNNUNetSegmentationDataModule(torch.nn.Module):
 
     def test_dataloader(self) -> Tuple[List[DataLoader], List[tio.GridSampler]]:
         return [DataLoader(testSubjectGridSampler, batch_size=self.batch_size, num_workers=0, collate_fn=partial(self.collate_fn, test=True)) for testSubjectGridSampler in self.testSubjectGridSamplers], self.testSubjectGridSamplers
+    
+    def val_whole_dataloader(self):
+        return [DataLoader(valSubjectGridSampler, batch_size=self.batch_size, num_workers=0, collate_fn=partial(self.collate_fn, test=True)) for valSubjectGridSampler in self.valSubjectGridSamplers], self.valSubjectGridSamplers
 
     def getPreprocessTransform(self):
         H, W, D = self.config['data']['patch_size']

@@ -142,6 +142,7 @@ def main(args_eval, resume_preempt=False):
         os.makedirs(folder, exist_ok=True)
     log_file = os.path.join(folder, f'{tag}_r{rank}.csv')
     latest_path = os.path.join(folder, f'{tag}-latest.pth.tar')
+    best_path = os.path.join(folder, f'{tag}-best.pth.tar')
     test_prediction_path = os.path.join(folder, f'{tag}-predictions')
     train_visualization_folder = os.path.join(folder, 'visualization')
 
@@ -216,6 +217,7 @@ def main(args_eval, resume_preempt=False):
     data_module.setup('fit')
     train_loader = data_module.train_dataloader()
     val_loader = data_module.val_dataloader()
+    best_val_dice = 0.0
 
     ipe = len(train_loader)
     logger.info(f'Dataloader created... iterations per epoch: {ipe}')
@@ -239,7 +241,7 @@ def main(args_eval, resume_preempt=False):
     # -- load training checkpoint
     start_epoch = 0
     if resume_checkpoint:
-        encoder, decoder, optimizer, scaler, start_epoch = load_checkpoint(
+        encoder, decoder, optimizer, scaler, start_epoch, best_val_dice = load_checkpoint(
             r_path=latest_path,
             encoder=encoder,
             decoder=decoder,
@@ -261,6 +263,7 @@ def main(args_eval, resume_preempt=False):
             'batch_size': batch_size,
             'world_size': world_size,
             'lr': lr,
+            'best_val_dice': best_val_dice,
         }
         try:
             torch.save(save_dict, path)
@@ -304,10 +307,44 @@ def main(args_eval, resume_preempt=False):
         if rank == 0:
             csv_logger.log(epoch + 1, train_dice, val_dice)
         save_checkpoint(epoch + 1)
-    
+
+        if epoch % 250 == 0:
+            # -- VALIDATION LOOP
+            data_module.setup('val_whole')
+            val_whole_loaders, val_whole_grid_samplers = data_module.val_whole_dataloader()
+            dice_scores = []
+            for val_whole_loader, val_whole_grid_sampler, index in zip(val_whole_loaders, val_whole_grid_samplers, range(len(val_whole_loaders))):
+                prediction_aggregator = tio.inference.GridAggregator(val_whole_grid_sampler)
+                label_aggregator = tio.inference.GridAggregator(val_whole_grid_sampler)
+                dice_score = run_test_whole_volumne(
+                    device=device,
+                    encoder=encoder,
+                    decoder=decoder,
+                    data_loader=val_whole_loader,
+                    prediction_aggregator=prediction_aggregator,
+                    label_aggregator=label_aggregator,
+                    use_bfloat16=use_bfloat16,
+                    save_prediction_prefix=str(os.path.join(test_prediction_path, f'val_{epoch}_index_{index}'))
+                    )
+                dice_scores.append(dice_score.item())
+            dice_score = np.mean(np.array(dice_scores))
+            logger.info(f'[{epoch}] Validation: {dice_score} ({dice_scores})')
+            if dice_score > best_val_dice:
+                logger.info(f'[{epoch + 1}] Found new best!: {dice_score} ({dice_scores}) improved from {best_val_dice}, saving to {best_path}')
+                best_val_dice = dice_score
+                save_checkpoint(epoch, best_path)
+            else:
+                logger.info(f'[{epoch + 1}] Validation does not improve from {best_val_dice}')
+
+
     # -- TESTING LOOP
     data_module.setup('test')
     test_loaders, test_grid_samplers = data_module.test_dataloader()
+    encoder, decoder, _, _, start_epoch, best_val_dice = load_checkpoint(r_path=best_path,
+                                                                         encoder=encoder,    decoder=decoder,
+                                                                         opt=optimizer,
+                                                                         scaler=scaler)
+    logger.info(f'[0] Loaded best model (dice {best_val_dice:.5f}, epoch {start_epoch}) for testing')
     dice_scores = []
     for test_loader, test_grid_sampler, index in zip(test_loaders, test_grid_samplers, range(len(test_loaders))):
         prediction_aggregator = tio.inference.GridAggregator(test_grid_sampler)
@@ -323,9 +360,9 @@ def main(args_eval, resume_preempt=False):
             save_prediction_prefix=str(os.path.join(test_prediction_path, f'index_{index}'))
             )
         print(dice_score.item())
-        dice_scores.append(dice_score)
-    dice_score = dice_score.mean()
-    logger.info(f'[0] Test: {dice_score}')
+        dice_scores.append(dice_score.item())
+    dice_score = np.mean(np.array(dice_scores))
+    logger.info(f'[0] Test: {dice_score} ({dice_scores})')
 
 import torch
 import segmentation_models_pytorch.losses as smp_losses
@@ -559,6 +596,13 @@ def load_checkpoint(
         checkpoint = torch.load(r_path, map_location=torch.device('cpu'))
         epoch = checkpoint['epoch']
 
+        # reverse compatability
+        best_val_dice = 0.0
+        if 'best_val_dice' in checkpoint:
+            best_val_dice = checkpoint['best_val_dice']
+            logger.info(f'loaded best validation dice from epoch {epoch} with dice: {best_val_dice}')
+        
+
         # -- loading encoder
         pretrained_dict = checkpoint['encoder']
         msg = encoder.load_state_dict(pretrained_dict)
@@ -581,7 +625,7 @@ def load_checkpoint(
         logger.info(f'Encountered exception when loading checkpoint {e}')
         epoch = 0
 
-    return encoder, decoder, opt, scaler, epoch
+    return encoder, decoder, opt, scaler, epoch, best_val_dice
 
 def init_opt(
     encoder,
