@@ -11,6 +11,7 @@ import multiprocessing as mp
 
 import pprint
 import yaml
+from random import randint
 
 from app.scaffold import main as app_main
 from src.utils.distributed import init_distributed
@@ -53,7 +54,9 @@ def process_main(rank, fname, world_size, devices):
             yaml.dump(params, f)
 
     # Init distributed (access to comm between GPUS on same machine)
-    world_size, rank = init_distributed(rank_and_world_size=(rank, world_size))
+    port = ((randint(0, 1_000_000) % 64512 + 1024))
+    print(f'Random port is ... {port}')
+    world_size, rank = init_distributed(port=port, rank_and_world_size=(rank, world_size))
     logger.info(f'Running... (rank: {rank}/{world_size})')
 
     # Launch the app with loaded config
