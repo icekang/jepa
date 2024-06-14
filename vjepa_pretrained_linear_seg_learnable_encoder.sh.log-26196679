@@ -1,0 +1,186 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/segmentation-linear-probe.yaml
+INFO:root:loaded params...
+{   'data': {   'batch_size': 16,
+                'data_directory': '/home/gridsan/nchutisilp/datasets/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/',
+                'fold': 0,
+                'num_classes': 2,
+                'num_workers': 8,
+                'patch_size': [224, 224, 16],
+                'queue_max_length': 300,
+                'samples_per_volume': 20},
+    'decoder': {'depth': 0},
+    'eval_name': 'video_segmentation',
+    'nodes': 8,
+    'optimization': {   'batch_size': 4,
+                        'final_lr': 0.0,
+                        'freeze_encoder': False,
+                        'lr': 0.0001,
+                        'num_epochs': 2001,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-latest.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': True,
+    'tag': 'calcium_oct_linear_probe',
+    'tasks_per_node': 8}
+Random port is ... 60447
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_segmentation
+INFO:evals.video_segmentation.eval:Initialized (rank/world-size) 0/1
+INFO:evals.video_segmentation.eval:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:evals.video_segmentation.eval:loaded pretrained model with msg: <All keys matched successfully>
+INFO:evals.video_segmentation.eval:loaded pretrained encoder from epoch: 300
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+=====================================================================================================================
+
+self.patchesTrainSet.iterations_per_epoch // self.batch_size 5
+
+=====================================================================================================================
+INFO:evals.video_segmentation.eval:Dataloader created... iterations per epoch: 5
+INFO:evals.video_segmentation.eval:Using AdamW
+INFO:evals.video_segmentation.eval:loaded pretrained classifier from epoch 2001 with msg: <All keys matched successfully>
+INFO:evals.video_segmentation.eval:loaded pretrained classifier from epoch 2001 with msg: <All keys matched successfully>
+INFO:evals.video_segmentation.eval:loaded optimizers from epoch 2001
+INFO:evals.video_segmentation.eval:read-path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_linear_probe/jepa-latest.pth.tar
+INFO:evals.video_segmentation.eval:Testing iteration 0 / 46
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+INFO:evals.video_segmentation.eval:Testing iteration 1 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 2 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 3 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 4 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 5 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 6 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 7 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 8 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 9 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 10 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 11 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 12 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 13 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 14 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 15 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 16 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 17 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 18 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 19 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 20 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 21 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 22 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 23 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 24 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 25 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 26 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 27 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 28 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 29 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 30 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 31 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 32 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 33 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 34 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 35 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 36 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 37 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 38 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 39 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 40 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 41 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 42 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 43 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 44 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 45 / 46
+/home/gridsan/nchutisilp/projects/jepa/evals/video_segmentation/eval.py:497: RuntimeWarning: Medical image frameworks such as ITK do not support int64. Casting to int32...
+  predictions = prediction_aggregator.get_output_tensor()
+/home/gridsan/nchutisilp/projects/jepa/evals/video_segmentation/eval.py:498: RuntimeWarning: Medical image frameworks such as ITK do not support int64. Casting to int32...
+  labels = label_aggregator.get_output_tensor()
+INFO:evals.video_segmentation.eval:Saved prediction and labels in /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_linear_probe/jepa-predictions/index_0_prediction.pt and /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_linear_probe/jepa-predictions/index_0_label.pt
+0.6641175150871277
+INFO:evals.video_segmentation.eval:Testing iteration 0 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 1 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 2 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 3 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 4 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 5 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 6 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 7 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 8 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 9 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 10 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 11 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 12 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 13 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 14 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 15 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 16 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 17 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 18 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 19 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 20 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 21 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 22 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 23 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 24 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 25 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 26 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 27 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 28 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 29 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 30 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 31 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 32 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 33 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 34 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 35 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 36 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 37 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 38 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 39 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 40 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 41 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 42 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 43 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 44 / 46
+INFO:evals.video_segmentation.eval:Testing iteration 45 / 46
+INFO:evals.video_segmentation.eval:Saved prediction and labels in /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_linear_probe/jepa-predictions/index_1_prediction.pt and /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_linear_probe/jepa-predictions/index_1_label.pt
+0.6808141469955444
+INFO:evals.video_segmentation.eval:[0] Test: 0.6808141469955444

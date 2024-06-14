@@ -1,0 +1,122 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/segmentation-linear-probe-aug-resample-fold2.yaml
+INFO:root:loaded params...
+{   'data': {   'augmentation': {   'affine': 0.5,
+                                    'anisotropy': 0.4,
+                                    'blur': 0.3,
+                                    'flip': 0.4,
+                                    'gamma': 0.2,
+                                    'noise': 0.2},
+                'batch_size': 16,
+                'data_directory': '/home/gridsan/nchutisilp/datasets/nnUNet_Datasets/nnUNet_raw/Dataset302_Calcium_OCTv2/',
+                'fold': 2,
+                'num_classes': 2,
+                'num_workers': 8,
+                'patch_size': [224, 224, 16],
+                'queue_max_length': 300,
+                'samples_per_volume': 20,
+                'train_sampling_probability': [0.25, 0.75]},
+    'decoder': {'depth': 0, 'multi_features': False},
+    'eval_name': 'video_segmentation',
+    'nodes': 8,
+    'optimization': {   'batch_size': 4,
+                        'final_lr': 0.0,
+                        'freeze_encoder': False,
+                        'loss_weight': {   'cross_entropy': 0.5,
+                                           'dice': 0.5,
+                                           'focal': 0},
+                        'lr': 0.0001,
+                        'num_epochs': 2001,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-latest.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': False,
+    'tag': 'calcium_oct_linear_probe_aug_resample_fold2',
+    'tasks_per_node': 8}
+Random port is ... 9348
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_segmentation
+INFO:evals.video_segmentation.eval:Initialized (rank/world-size) 0/1
+INFO:evals.video_segmentation.eval:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:evals.video_segmentation.eval:loaded pretrained model with msg: <All keys matched successfully>
+INFO:evals.video_segmentation.eval:loaded pretrained encoder from epoch: 300
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+AttentiveSegmentator(
+  (decoder_embed): Linear(in_features=1024, out_features=768, bias=True)
+  (decoder_blocks): ModuleList()
+  (norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+  (decoder_pred): Linear(in_features=768, out_features=1024, bias=True)
+)
+=====================================================================================================================
+
+self.patchesTrainSet.iterations_per_epoch // self.batch_size 5
+
+=====================================================================================================================
+INFO:evals.video_segmentation.eval:Dataloader created... iterations per epoch: 5
+INFO:evals.video_segmentation.eval:Using AdamW
+INFO:evals.video_segmentation.eval:Epoch 1
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+INFO:evals.video_segmentation.eval:[Iteration     0] 0.093% (loss: 0.459) [mem: 2.59e+04]
+INFO:evals.video_segmentation.eval:[Iteration     0] 0.132% (loss: 0.309) [mem: 2.83e+04]
+INFO:evals.video_segmentation.eval:[Epoch     1] train: 0.162% test: 0.213%
+Process Process-1:
+Traceback (most recent call last):
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/main.py", line 59, in process_main
+    eval_main(params['eval_name'], args_eval=params)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/scaffold.py", line 22, in main
+    return importlib.import_module(f'evals.{eval_name}.eval').main(
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_segmentation/eval.py", line 313, in main
+    data_module.setup('val_whole')
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_segmentation/utils.py", line 91, in setup
+    self.valSubjectGridSamplers = [tio.inference.GridSampler(
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_segmentation/utils.py", line 91, in <listcomp>
+    self.valSubjectGridSamplers = [tio.inference.GridSampler(
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torchio/data/sampler/grid.py", line 71, in __init__
+    self.locations = self._compute_locations(self.subject)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torchio/data/sampler/grid.py", line 102, in _compute_locations
+    sizes = subject.spatial_shape, self.patch_size, self.patch_overlap
+AttributeError: 'list' object has no attribute 'spatial_shape'
