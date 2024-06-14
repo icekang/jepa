@@ -1,6 +1,6 @@
 nodes: 8
 tasks_per_node: 8
-tag: calcium_oct_linear_probe
+tag: calcium_oct_linear_probe_multifeat_fold1
 eval_name: video_segmentation
 resume_checkpoint: false
 data:

@@ -1,6 +1,6 @@
 nodes: 8
 tasks_per_node: 8
-tag: calcium_oct_linear_probe
+tag: calcium_oct_linear_probe_multifeat_fold0
 eval_name: video_segmentation
 resume_checkpoint: false
 data:
@@ -41,3 +41,4 @@ pretrain:
   folder: /home/gridsan/nchutisilp/projects/jepa/pretrain_models
   checkpoint: jepa-latest.pth.tar  # name of pretrained model file inside folder
   write_tag: jepa
+  load_weight: true
