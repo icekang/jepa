@@ -52,6 +52,8 @@ from evals.video_classification_frozen.utils import (
     FrameAggregation
 )
 
+from torchmetrics import Accuracy, Precision, Recall, F1Score
+
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -91,6 +93,7 @@ def main(args_eval, resume_preempt=False):
     args_data = args_eval.get('data')
     train_data_path = [args_data.get('dataset_train')]
     val_data_path = [args_data.get('dataset_val')]
+    test_data_path = [args_data.get('dataset_test')]
     dataset_type = args_data.get('dataset_type', 'VideoDataset')
     num_classes = args_data.get('num_classes')
     eval_num_segments = args_data.get('num_segments', 1)
@@ -98,6 +101,7 @@ def main(args_eval, resume_preempt=False):
     eval_frame_step = args_pretrain.get('frame_step', 4)
     eval_duration = args_pretrain.get('clip_duration', None)
     eval_num_views_per_segment = args_data.get('num_views_per_segment', 1)
+    datasets_weights = args_data.get('datasets_weights', None)
 
     # -- OPTIMIZATION
     args_opt = args_eval.get('optimization')
@@ -111,6 +115,7 @@ def main(args_eval, resume_preempt=False):
     final_lr = args_opt.get('final_lr')
     warmup = args_opt.get('warmup')
     use_bfloat16 = args_opt.get('use_bfloat16')
+    freeze_encoder = args_opt.get('freeze_encoder', True)
 
     # -- EXPERIMENT-ID/TAG (optional)
     resume_checkpoint = args_eval.get('resume_checkpoint', False) or resume_preempt
@@ -174,9 +179,11 @@ def main(args_eval, resume_preempt=False):
             tubelet_size=tubelet_size,
             attend_across_segments=attend_across_segments
         ).to(device)
-    encoder.eval()
-    for p in encoder.parameters():
-        p.requires_grad = False
+
+    if freeze_encoder:
+        encoder.eval()
+        for p in encoder.parameters():
+            p.requires_grad = False
 
     # -- init classifier
     classifier = AttentiveClassifier(
@@ -199,7 +206,8 @@ def main(args_eval, resume_preempt=False):
         batch_size=batch_size,
         world_size=world_size,
         rank=rank,
-        training=True)
+        training=True,
+        datasets_weights=datasets_weights)
     val_loader = make_dataloader(
         dataset_type=dataset_type,
         root_path=val_data_path,
@@ -219,6 +227,7 @@ def main(args_eval, resume_preempt=False):
 
     # -- optimizer and scheduler
     optimizer, scaler, scheduler, wd_scheduler = init_opt(
+        encoder=encoder,
         classifier=classifier,
         wd=wd,
         start_lr=start_lr,
@@ -227,7 +236,8 @@ def main(args_eval, resume_preempt=False):
         iterations_per_epoch=ipe,
         warmup=warmup,
         num_epochs=num_epochs,
-        use_bfloat16=use_bfloat16)
+        use_bfloat16=use_bfloat16,
+        freeze_encoder=freeze_encoder)
     classifier = DistributedDataParallel(classifier, static_graph=True)
 
     # -- load training checkpoint
@@ -259,7 +269,7 @@ def main(args_eval, resume_preempt=False):
     # TRAIN LOOP
     for epoch in range(start_epoch, num_epochs):
         logger.info('Epoch %d' % (epoch + 1))
-        train_acc = run_one_epoch(
+        train_acc, train_acc2, train_precision, train_recall, train_f1 = run_one_epoch(
             device=device,
             training=True,
             num_temporal_views=eval_num_segments if attend_across_segments else 1,
@@ -272,9 +282,10 @@ def main(args_eval, resume_preempt=False):
             scheduler=scheduler,
             wd_scheduler=wd_scheduler,
             data_loader=train_loader,
-            use_bfloat16=use_bfloat16)
+            use_bfloat16=use_bfloat16,
+            freeze_encoder=freeze_encoder)
 
-        val_acc = run_one_epoch(
+        val_acc, val_acc2, val_precision, val_recall, val_f1 = run_one_epoch(
             device=device,
             training=False,
             num_temporal_views=eval_num_segments,
@@ -287,12 +298,47 @@ def main(args_eval, resume_preempt=False):
             scheduler=scheduler,
             wd_scheduler=wd_scheduler,
             data_loader=val_loader,
-            use_bfloat16=use_bfloat16)
+            use_bfloat16=use_bfloat16,
+            freeze_encoder=freeze_encoder)
 
         logger.info('[%5d] train: %.3f%% test: %.3f%%' % (epoch + 1, train_acc, val_acc))
+        logger.info(f'Accuracy: {train_acc2:.5f}, Precision: {train_precision:.5f}, Recall: {train_recall:.5f}, F1: {train_f1:.5f}')
+        logger.info(f'Val Accuracy: {val_acc2:.5f}, Precision: {val_precision:.5f}, Recall: {val_recall:.5f}, F1: {val_f1:.5f}')
         if rank == 0:
             csv_logger.log(epoch + 1, train_acc, val_acc)
         save_checkpoint(epoch + 1)
+    
+    # TEST LOOP
+    test_loader = make_dataloader(
+        dataset_type=dataset_type,
+        root_path=test_data_path,
+        resolution=resolution,
+        frames_per_clip=eval_frames_per_clip,
+        frame_step=eval_frame_step,
+        num_segments=eval_num_segments,
+        eval_duration=eval_duration,
+        num_views_per_segment=eval_num_views_per_segment,
+        allow_segment_overlap=True,
+        batch_size=batch_size,
+        world_size=world_size,
+        rank=rank,
+        training=False)
+    test_acc, test_acc2, test_precision, test_recall, test_f1 = run_one_epoch(
+            device=device,
+            training=False,
+            num_temporal_views=eval_num_segments,
+            attend_across_segments=attend_across_segments,
+            num_spatial_views=eval_num_views_per_segment,
+            encoder=encoder,
+            classifier=classifier,
+            scaler=scaler,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            wd_scheduler=wd_scheduler,
+            data_loader=test_loader,
+            use_bfloat16=use_bfloat16,
+            freeze_encoder=freeze_encoder)
+    logger.info(f'Test Accuracy: {test_acc2:.5f}, Precision: {test_precision:.5f}, Recall: {test_recall:.5f}, F1: {test_f1:.5f}')
 
 
 def run_one_epoch(
@@ -309,11 +355,24 @@ def run_one_epoch(
     num_spatial_views,
     num_temporal_views,
     attend_across_segments,
+    freeze_encoder
 ):
-
+    if freeze_encoder:
+        encoder.train(mode=False)
+    else:
+        encoder.train(mode=training)
     classifier.train(mode=training)
     criterion = torch.nn.CrossEntropyLoss()
     top1_meter = AverageMeter()
+    accurary = Accuracy(task='binary').to(device=device)
+    precision = Precision(task='binary').to(device=device)
+    recall = Recall(task='binary').to(device=device)
+    f1 = F1Score(task='binary').to(device=device)
+
+    training_zeros = 0
+    training_ones = 0
+    training_pred_zeros = 0
+    training_pred_ones = 0
     for itr, data in enumerate(data_loader):
 
         if training:
@@ -332,8 +391,17 @@ def run_one_epoch(
             batch_size = len(labels)
 
             # Forward and prediction
+            if freeze_encoder:
+                with torch.no_grad():
+                    outputs = encoder(clips, clip_indices)
+            else:
+                if not training:
+                    with torch.no_grad():
+                        outputs = encoder(clips, clip_indices)
+                else:
+                    outputs = encoder(clips, clip_indices)
+
             with torch.no_grad():
-                outputs = encoder(clips, clip_indices)
                 if not training:
                     if attend_across_segments:
                         outputs = [classifier(o) for o in outputs]
@@ -345,19 +413,32 @@ def run_one_epoch(
                 else:
                     outputs = [[classifier(ost) for ost in os] for os in outputs]
 
-        # Compute loss
-        if attend_across_segments:
-            loss = sum([criterion(o, labels) for o in outputs]) / len(outputs)
-        else:
-            loss = sum([sum([criterion(ost, labels) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
-        with torch.no_grad():
+            # Compute loss
             if attend_across_segments:
-                outputs = sum([F.softmax(o, dim=1) for o in outputs]) / len(outputs)
+                loss = sum([criterion(o, labels) for o in outputs]) / len(outputs)
             else:
-                outputs = sum([sum([F.softmax(ost, dim=1) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
-            top1_acc = 100. * outputs.max(dim=1).indices.eq(labels).sum() / batch_size
-            top1_acc = float(AllReduce.apply(top1_acc))
-            top1_meter.update(top1_acc)
+                loss = sum([sum([criterion(ost, labels) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
+            with torch.no_grad():
+                if attend_across_segments:
+                    outputs = sum([F.softmax(o, dim=1) for o in outputs]) / len(outputs)
+                else:
+                    outputs = sum([sum([F.softmax(ost, dim=1) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
+                top1_acc = 100. * outputs.max(dim=1).indices.eq(labels).sum() / batch_size
+                if training:
+                    training_zeros += labels.eq(0).sum().item()
+                    training_ones += labels.eq(1).sum().item()
+                    training_pred_zeros += outputs.max(dim=1).indices.eq(0).sum().item()
+                    training_pred_ones += outputs.max(dim=1).indices.eq(1).sum().item()
+                    
+                if not training:
+                    print('outputs', outputs.max(dim=1).indices.shape, outputs.max(dim=1).indices)
+                    print('labels', labels.shape, labels)
+                accurary.update(outputs.max(dim=1).indices, labels)
+                precision.update(outputs.max(dim=1).indices, labels)
+                recall.update(outputs.max(dim=1).indices, labels)
+                f1.update(outputs.max(dim=1).indices, labels)
+                top1_acc = float(AllReduce.apply(top1_acc))
+                top1_meter.update(top1_acc)
 
         if training:
             if use_bfloat16:
@@ -376,8 +457,8 @@ def run_one_epoch(
             logger.info('[%5d] %.3f%% (loss: %.3f) [mem: %.2e]'
                         % (itr, top1_meter.avg, loss,
                            torch.cuda.max_memory_allocated() / 1024.**2))
-
-    return top1_meter.avg
+    print(f'[Label/Prediction] Training zeros: {training_zeros} / {training_pred_zeros}, Training ones: {training_ones} / {training_pred_ones}')
+    return top1_meter.avg, accurary.compute(), precision.compute(), recall.compute(), f1.compute()
 
 
 def load_checkpoint(
@@ -454,7 +535,8 @@ def make_dataloader(
     allow_segment_overlap=True,
     training=False,
     num_workers=12,
-    subset_file=None
+    subset_file=None,
+    datasets_weights=None
 ):
     # Make Video Transforms
     transform = make_transforms(
@@ -484,7 +566,8 @@ def make_dataloader(
         num_workers=num_workers,
         copy_data=False,
         drop_last=False,
-        subset_file=subset_file)
+        subset_file=subset_file,
+        datasets_weights=datasets_weights)
     return data_loader
 
 
@@ -520,6 +603,7 @@ def init_model(
 
 
 def init_opt(
+    encoder,
     classifier,
     iterations_per_epoch,
     start_lr,
@@ -529,7 +613,8 @@ def init_opt(
     wd=1e-6,
     final_wd=1e-6,
     final_lr=0.0,
-    use_bfloat16=False
+    use_bfloat16=False,
+    freeze_encoder=True
 ):
     param_groups = [
         {
@@ -543,6 +628,20 @@ def init_opt(
         }
     ]
 
+    if not freeze_encoder:
+        logger.info('Unfreezing encoder...')
+        encoder_param_groups = [
+            {
+                'params': (p for n, p in encoder.named_parameters()
+                        if ('bias' not in n) and (len(p.shape) != 1))
+            }, {
+                'params': (p for n, p in encoder.named_parameters()
+                        if ('bias' in n) or (len(p.shape) == 1)),
+                'WD_exclude': True,
+                'weight_decay': 0,
+            }, 
+        ]
+        param_groups += encoder_param_groups
     logger.info('Using AdamW')
     optimizer = torch.optim.AdamW(param_groups)
     scheduler = WarmupCosineSchedule(

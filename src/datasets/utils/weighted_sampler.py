@@ -87,7 +87,7 @@ class DistributedWeightedSampler(DistributedSamplerWrapper):
         weighted_sampler = CustomWeightedRandomSampler(
             weights=weights,
             num_samples=len(weights),
-            replacement=False)
+            replacement=True)
 
         super(DistributedWeightedSampler, self).__init__(
             sampler=weighted_sampler,

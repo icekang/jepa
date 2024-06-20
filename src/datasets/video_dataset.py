@@ -148,7 +148,12 @@ class VideoDataset(torch.utils.data.Dataset):
         if self.datasets_weights is not None:
             self.sample_weights = []
             for dw, ns in zip(self.datasets_weights, self.num_samples_per_dataset):
-                self.sample_weights += [dw / ns] * ns
+                if isinstance(dw, (int, float)):
+                    self.sample_weights += [dw / ns] * ns
+                elif isinstance(dw, list):
+                    self.sample_weights += dw
+                else:
+                    raise ValueError(f'Invalid weight type {dw=}')
 
         self.samples = samples
         self.labels = labels
