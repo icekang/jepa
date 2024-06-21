@@ -1,11 +1,11 @@
 nodes: 8
 tasks_per_node: 8
-tag: cf-pres-from-segmentation-16x2x3
+tag: cf-pres-from-segmentation-16x2x3-fold1
 eval_name: video_classification_frozen
 resume_checkpoint: false
 data:
-  dataset_train: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold0.csv
-  dataset_val: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold0.csv
+  dataset_train: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold1.csv
+  dataset_val: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold1.csv
   dataset_test: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_test.csv
   dataset_type: VideoDataset
   num_classes: 2
