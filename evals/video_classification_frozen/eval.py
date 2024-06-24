@@ -98,7 +98,7 @@ def main(args_eval, resume_preempt=False):
     num_classes = args_data.get('num_classes')
     eval_num_segments = args_data.get('num_segments', 1)
     eval_frames_per_clip = args_data.get('frames_per_clip', 16)
-    eval_frame_step = args_pretrain.get('frame_step', 4)
+    eval_frame_step = args_data.get('frame_step', 4)
     eval_duration = args_pretrain.get('clip_duration', None)
     eval_num_views_per_segment = args_data.get('num_views_per_segment', 1)
     datasets_weights = args_data.get('datasets_weights', None)
@@ -145,13 +145,21 @@ def main(args_eval, resume_preempt=False):
         os.makedirs(folder, exist_ok=True)
     log_file = os.path.join(folder, f'{tag}_r{rank}.csv')
     latest_path = os.path.join(folder, f'{tag}-latest.pth.tar')
+    best_path = os.path.join(folder, f'{tag}-best.pth.tar')
 
     # -- make csv_logger
     if rank == 0:
         csv_logger = CSVLogger(log_file,
                                ('%d', 'epoch'),
-                               ('%.5f', 'loss'),
-                               ('%.5f', 'acc'))
+                               ('%.5f', 'train_acc'),
+                               ('%.5f', 'train_precision'),
+                               ('%.5f', 'train_recall'),
+                               ('%.5f', 'train_f1'),
+                               ('%.5f', 'val_acc'),
+                               ('%.5f', 'val_precision'),
+                               ('%.5f', 'val_recall'),
+                               ('%.5f', 'val_f1'),
+                               )
 
     # Initialize model
 
@@ -222,6 +230,7 @@ def main(args_eval, resume_preempt=False):
         world_size=world_size,
         rank=rank,
         training=False)
+    best_val_f1 = 0.0
     ipe = len(train_loader)
     logger.info(f'Dataloader created... iterations per epoch: {ipe}')
 
@@ -243,9 +252,10 @@ def main(args_eval, resume_preempt=False):
     # -- load training checkpoint
     start_epoch = 0
     if resume_checkpoint:
-        classifier, optimizer, scaler, start_epoch = load_checkpoint(
+        encoder, classifier, optimizer, scaler, start_epoch, best_val_f1 = load_checkpoint(
             device=device,
             r_path=latest_path,
+            encoder=encoder,
             classifier=classifier,
             opt=optimizer,
             scaler=scaler)
@@ -253,18 +263,20 @@ def main(args_eval, resume_preempt=False):
             scheduler.step()
             wd_scheduler.step()
 
-    def save_checkpoint(epoch):
+    def save_checkpoint(epoch, path=latest_path):
         save_dict = {
             'classifier': classifier.state_dict(),
+            'encoder': encoder.state_dict(),
             'opt': optimizer.state_dict(),
             'scaler': None if scaler is None else scaler.state_dict(),
             'epoch': epoch,
             'batch_size': batch_size,
             'world_size': world_size,
-            'lr': lr
+            'lr': lr,
+            'best_val_f1': best_val_f1
         }
         if rank == 0:
-            torch.save(save_dict, latest_path)
+            torch.save(save_dict, path)
 
     # TRAIN LOOP
     for epoch in range(start_epoch, num_epochs):
@@ -305,7 +317,20 @@ def main(args_eval, resume_preempt=False):
         logger.info(f'Accuracy: {train_acc2:.5f}, Precision: {train_precision:.5f}, Recall: {train_recall:.5f}, F1: {train_f1:.5f}')
         logger.info(f'Val Accuracy: {val_acc2:.5f}, Precision: {val_precision:.5f}, Recall: {val_recall:.5f}, F1: {val_f1:.5f}')
         if rank == 0:
-            csv_logger.log(epoch + 1, train_acc, val_acc)
+            csv_logger.log(epoch + 1, 
+                           train_acc,
+                           train_precision,
+                           train_recall,
+                           val_acc,
+                           val_precision,
+                           val_recall,
+                           val_f1)
+        if val_f1 > best_val_f1:
+            logger.info(f'New best F1: {val_f1:.5f} improved from {best_val_f1}, saving to {best_path}')
+            best_val_f1 = val_f1
+            save_checkpoint(epoch + 1, best_path)
+        else:
+            logger.info(f'F1: {val_f1:.5f} did not improve from {best_val_f1}')
         save_checkpoint(epoch + 1)
     
     # TEST LOOP
@@ -323,6 +348,14 @@ def main(args_eval, resume_preempt=False):
         world_size=world_size,
         rank=rank,
         training=False)
+
+    encoder, classifier, _, _, _, _ = load_checkpoint(
+        device=device,
+        r_path=best_path,
+        encoder=encoder,
+        classifier=classifier,
+        opt=optimizer,
+        scaler=scaler)
     test_acc, test_acc2, test_precision, test_recall, test_f1 = run_one_epoch(
             device=device,
             training=False,
@@ -424,11 +457,10 @@ def run_one_epoch(
                 else:
                     outputs = sum([sum([F.softmax(ost, dim=1) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
                 top1_acc = 100. * outputs.max(dim=1).indices.eq(labels).sum() / batch_size
-                if training:
-                    training_zeros += labels.eq(0).sum().item()
-                    training_ones += labels.eq(1).sum().item()
-                    training_pred_zeros += outputs.max(dim=1).indices.eq(0).sum().item()
-                    training_pred_ones += outputs.max(dim=1).indices.eq(1).sum().item()
+                training_zeros += labels.eq(0).sum().item()
+                training_ones += labels.eq(1).sum().item()
+                training_pred_zeros += outputs.max(dim=1).indices.eq(0).sum().item()
+                training_pred_ones += outputs.max(dim=1).indices.eq(1).sum().item()
                     
                 if not training:
                     print('outputs', outputs.max(dim=1).indices.shape, outputs.max(dim=1).indices)
@@ -439,6 +471,11 @@ def run_one_epoch(
                 f1.update(outputs.max(dim=1).indices, labels)
                 top1_acc = float(AllReduce.apply(top1_acc))
                 top1_meter.update(top1_acc)
+            
+            print(f'{"Training" if training else "Validation"} min-max:', data[0][0][0].min(), data[0][0][0].max())
+            for o in outputs:
+                print(f'{"Training" if training else "Validation"}', 'Output', o.shape, o)
+            print(f'{"Training" if training else "Validation"}', 'Labels', labels.shape, labels)
 
         if training:
             if use_bfloat16:
@@ -457,13 +494,14 @@ def run_one_epoch(
             logger.info('[%5d] %.3f%% (loss: %.3f) [mem: %.2e]'
                         % (itr, top1_meter.avg, loss,
                            torch.cuda.max_memory_allocated() / 1024.**2))
-    print(f'[Label/Prediction] Training zeros: {training_zeros} / {training_pred_zeros}, Training ones: {training_ones} / {training_pred_ones}')
+    print(f'[Label/Prediction] {"Training" if training else "Validation"} zeros: {training_zeros} / {training_pred_zeros}, Training ones: {training_ones} / {training_pred_ones}')
     return top1_meter.avg, accurary.compute(), precision.compute(), recall.compute(), f1.compute()
 
 
 def load_checkpoint(
     device,
     r_path,
+    encoder,
     classifier,
     opt,
     scaler
@@ -471,6 +509,19 @@ def load_checkpoint(
     try:
         checkpoint = torch.load(r_path, map_location=torch.device('cpu'))
         epoch = checkpoint['epoch']
+
+        # reverse compatability
+        best_val_f1 = 0.0
+        if 'best_val_f1' in checkpoint:
+            best_val_f1 = checkpoint['best_val_f1']
+            logger.info(f'loaded best validation dice from epoch {epoch} with f1: {best_val_f1}')
+
+        # -- loading encoder
+        if 'encoder' in checkpoint:
+            msg = encoder.load_state_dict(checkpoint['encoder'])
+            logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+        else:
+            logger.info(f'No encoder found in checkpoint {r_path}')
 
         # -- loading encoder
         pretrained_dict = checkpoint['classifier']
@@ -489,7 +540,7 @@ def load_checkpoint(
         logger.info(f'Encountered exception when loading checkpoint {e}')
         epoch = 0
 
-    return classifier, opt, scaler, epoch
+    return encoder, classifier, opt, scaler, epoch, best_val_f1
 
 
 def load_pretrained(
@@ -542,13 +593,14 @@ def make_dataloader(
     transform = make_transforms(
         training=training,
         num_views_per_clip=num_views_per_segment,
-        random_horizontal_flip=False,
+        random_horizontal_flip=True,
         random_resize_aspect_ratio=(0.75, 4/3),
-        random_resize_scale=(0.08, 1.0),
-        reprob=0.25,
+        random_resize_scale=(0.8, 1.2),
+        reprob=0.0,
         auto_augment=True,
         motion_shift=False,
         crop_size=resolution,
+        normalize=((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
     )
 
     data_loader, _ = init_data(
