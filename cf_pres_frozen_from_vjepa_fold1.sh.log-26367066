@@ -1,0 +1,307 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/vitl16_cf_pres_16x2x3_frozen_from_vjepa_fold1.yaml
+INFO:root:loaded params...
+{   'data': {   'dataset_test': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_test.csv',
+                'dataset_train': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold1.csv',
+                'dataset_type': 'VideoDataset',
+                'dataset_val': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold1.csv',
+                'frame_step': 2,
+                'frames_per_clip': 186,
+                'num_classes': 2,
+                'num_segments': 1,
+                'num_views_per_segment': 1},
+    'eval_name': 'video_classification_frozen',
+    'nodes': 8,
+    'optimization': {   'attend_across_segments': True,
+                        'batch_size': 24,
+                        'final_lr': 0.0,
+                        'freeze_encoder': True,
+                        'lr': 0.001,
+                        'num_epochs': 150,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-latest.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': True,
+    'tag': 'cf-pres-from-vjepa-16x2x3-fold1',
+    'tasks_per_node': 8}
+Random port is ... 34481
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_classification_frozen
+INFO:root:Initialized (rank/world-size) 0/1
+INFO:root:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:root:loaded pretrained model with msg: <All keys matched successfully>
+INFO:root:loaded pretrained encoder from epoch: 300
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:Dataloader created... iterations per epoch: 5
+INFO:root:Using AdamW
+INFO:root:loaded best validation dice from epoch 149 with f1: 0.8695651888847351
+INFO:root:loaded pretrained encoder from epoch 149 with msg: <All keys matched successfully>
+INFO:root:loaded pretrained classifier from epoch 149 with msg: <All keys matched successfully>
+INFO:root:loaded optimizers from epoch 149
+INFO:root:read-path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_classification_frozen/cf-pres-from-vjepa-16x2x3-fold1/jepa-latest.pth.tar
+INFO:root:Epoch 150
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+Training min-max: tensor(0.) tensor(1.)
+Training Output torch.Size([2]) tensor([0.3202, 0.6798], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4447, 0.5553], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5929, 0.4071], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0418, 0.9582], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1651, 0.8349], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2445, 0.7555], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1156, 0.8844], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2962, 0.7038], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7058, 0.2942], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7915, 0.2085], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0443, 0.9557], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4242, 0.5758], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0089, 0.9911], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5988, 0.4012], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2789, 0.7211], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6198, 0.3802], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3048, 0.6952], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0814, 0.9186], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5074, 0.4926], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3497, 0.6503], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7643, 0.2357], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3362, 0.6638], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6787, 0.3213], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4459, 0.5541], device='cuda:0')
+Training Labels torch.Size([24]) tensor([1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1],
+       device='cuda:0')
+INFO:root:[    0] 66.667% (loss: 0.620) [mem: 1.77e+04]
+Training min-max: tensor(0.) tensor(1.)
+Training Output torch.Size([2]) tensor([0.0073, 0.9927], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0281, 0.9719], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6053, 0.3947], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1239, 0.8761], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0356, 0.9644], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3986, 0.6014], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6799, 0.3201], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7226, 0.2774], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7168, 0.2832], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3529, 0.6471], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4750, 0.5250], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2852, 0.7148], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1624, 0.8376], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.8245, 0.1755], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2893, 0.7107], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0695, 0.9305], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7389, 0.2611], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2602, 0.7398], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1834, 0.8166], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6833, 0.3167], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3264, 0.6736], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1961, 0.8039], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4014, 0.5986], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6170, 0.3830], device='cuda:0')
+Training Labels torch.Size([24]) tensor([1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0],
+       device='cuda:0')
+Training min-max: tensor(0.) tensor(1.)
+Training Output torch.Size([2]) tensor([0.7723, 0.2277], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6995, 0.3005], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2518, 0.7482], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6779, 0.3221], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2428, 0.7572], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.8141, 0.1859], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2935, 0.7065], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7790, 0.2210], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0755, 0.9245], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0218, 0.9782], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4289, 0.5711], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.3315, 0.6685], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2103, 0.7897], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.8160, 0.1840], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4387, 0.5613], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6968, 0.3032], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6915, 0.3085], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1113, 0.8887], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0558, 0.9442], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2072, 0.7928], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4754, 0.5246], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7260, 0.2740], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2038, 0.7962], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5524, 0.4476], device='cuda:0')
+Training Labels torch.Size([24]) tensor([0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+       device='cuda:0')
+Training min-max: tensor(0.) tensor(1.)
+Training Output torch.Size([2]) tensor([0.5086, 0.4914], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7102, 0.2898], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0290, 0.9710], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1117, 0.8883], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0423, 0.9577], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0047, 0.9953], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7918, 0.2082], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4780, 0.5220], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0253, 0.9747], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4652, 0.5348], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5265, 0.4735], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6311, 0.3689], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1474, 0.8526], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5969, 0.4031], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0940, 0.9060], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.8129, 0.1871], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7193, 0.2807], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5833, 0.4167], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5522, 0.4478], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0669, 0.9331], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.2744, 0.7256], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4378, 0.5622], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.6609, 0.3391], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0584, 0.9416], device='cuda:0')
+Training Labels torch.Size([24]) tensor([0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+       device='cuda:0')
+Training min-max: tensor(0.) tensor(1.)
+Training Output torch.Size([2]) tensor([0.4702, 0.5298], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4511, 0.5489], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.4612, 0.5388], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.1073, 0.8927], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.5687, 0.4313], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.7431, 0.2569], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0150, 0.9850], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.8407, 0.1593], device='cuda:0')
+Training Output torch.Size([2]) tensor([0.0539, 0.9461], device='cuda:0')
+Training Labels torch.Size([9]) tensor([0, 1, 1, 1, 0, 0, 1, 0, 1], device='cuda:0')
+[Label/Prediction] Training zeros: 40 / 40, Training ones: 65 / 65
+outputs torch.Size([24]) tensor([1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1],
+       device='cuda:0')
+labels torch.Size([24]) tensor([1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1],
+       device='cuda:0')
+Validation min-max: tensor(0.) tensor(1.)
+Validation Output torch.Size([2]) tensor([0.1515, 0.8485], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.5865, 0.4135], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.6665, 0.3335], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.1119, 0.8881], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.2593, 0.7407], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.3498, 0.6502], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.1939, 0.8061], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.0846, 0.9154], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.4927, 0.5073], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.6333, 0.3667], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.7388, 0.2612], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.5734, 0.4266], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.3238, 0.6762], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.7526, 0.2474], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.6278, 0.3722], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.7283, 0.2717], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.3332, 0.6668], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.6759, 0.3241], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.5975, 0.4025], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.2633, 0.7367], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.4870, 0.5130], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.0907, 0.9093], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.6638, 0.3362], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.0204, 0.9796], device='cuda:0')
+Validation Labels torch.Size([24]) tensor([1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1],
+       device='cuda:0')
+INFO:root:[    0] 37.500% (loss: 0.906) [mem: 1.77e+04]
+outputs torch.Size([2]) tensor([1, 1], device='cuda:0')
+labels torch.Size([2]) tensor([1, 1], device='cuda:0')
+Validation min-max: tensor(0.) tensor(1.)
+Validation Output torch.Size([2]) tensor([0.3590, 0.6410], device='cuda:0')
+Validation Output torch.Size([2]) tensor([0.3836, 0.6164], device='cuda:0')
+Validation Labels torch.Size([2]) tensor([1, 1], device='cuda:0')
+[Label/Prediction] Validation zeros: 6 / 11, Training ones: 20 / 15
+INFO:root:[  150] train: 78.611% test: 68.750%
+INFO:root:Accuracy: 0.77143, Precision: 0.81538, Recall: 0.81538, F1: 0.81538
+INFO:root:Val Accuracy: 0.42308, Precision: 0.66667, Recall: 0.50000, F1: 0.57143
+INFO:root:F1: 0.57143 did not improve from 0.8695651888847351
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:loaded best validation dice from epoch 3 with f1: 0.8695651888847351
+INFO:root:loaded pretrained encoder from epoch 3 with msg: <All keys matched successfully>
+INFO:root:loaded pretrained classifier from epoch 3 with msg: <All keys matched successfully>
+INFO:root:loaded optimizers from epoch 3
+INFO:root:read-path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_classification_frozen/cf-pres-from-vjepa-16x2x3-fold1/jepa-best.pth.tar
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+outputs torch.Size([24]) tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+       device='cuda:0')
+labels torch.Size([24]) tensor([1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1],
+       device='cuda:0')
+Validation min-max: tensor(0.) tensor(1.)
+Validation Output torch.Size([2]) tensor([7.3097e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([6.7604e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([2.6064e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.2650e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([9.0971e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([6.3508e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.6928e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.3479e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.9742e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.6186e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.1649e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.4529e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([6.6556e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.0951e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.1004e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.1834e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.7922e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([7.6605e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.6463e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.7195e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([3.3993e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([2.9999e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.6045e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.2650e-20, 1.0000e+00], device='cuda:0')
+Validation Labels torch.Size([24]) tensor([1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1],
+       device='cuda:0')
+INFO:root:[    0] 75.000% (loss: 11.171) [mem: 1.77e+04]
+outputs torch.Size([9]) tensor([1, 1, 1, 1, 1, 1, 1, 1, 1], device='cuda:0')
+labels torch.Size([9]) tensor([0, 0, 0, 1, 0, 1, 0, 1, 0], device='cuda:0')
+Validation min-max: tensor(0.) tensor(1.)
+Validation Output torch.Size([2]) tensor([4.8693e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.5034e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([9.3858e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([6.5524e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.1834e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([6.6556e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.2650e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([4.3648e-20, 1.0000e+00], device='cuda:0')
+Validation Output torch.Size([2]) tensor([5.6045e-20, 1.0000e+00], device='cuda:0')
+Validation Labels torch.Size([9]) tensor([0, 0, 0, 1, 0, 1, 0, 1, 0], device='cuda:0')
+[Label/Prediction] Validation zeros: 12 / 0, Training ones: 21 / 33
+INFO:root:Test Accuracy: 0.63636, Precision: 0.63636, Recall: 1.00000, F1: 0.77778

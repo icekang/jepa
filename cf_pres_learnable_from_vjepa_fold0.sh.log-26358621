@@ -1,0 +1,122 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/vitl16_cf_pres_16x2x3_from_vjepa.yaml
+INFO:root:loaded params...
+{   'data': {   'dataset_test': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_test.csv',
+                'dataset_train': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold0.csv',
+                'dataset_type': 'VideoDataset',
+                'dataset_val': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold0.csv',
+                'frame_step': 3,
+                'frames_per_clip': 128,
+                'num_classes': 2,
+                'num_segments': 1,
+                'num_views_per_segment': 1},
+    'eval_name': 'video_classification_frozen',
+    'nodes': 8,
+    'optimization': {   'attend_across_segments': True,
+                        'batch_size': 2,
+                        'final_lr': 0.0,
+                        'freeze_encoder': False,
+                        'lr': 0.001,
+                        'num_epochs': 150,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-latest.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': False,
+    'tag': 'cf-pres-from-vjepa-16x2x3-fold0',
+    'tasks_per_node': 8}
+Random port is ... 41641
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_classification_frozen
+INFO:root:Initialized (rank/world-size) 0/1
+INFO:root:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:root:loaded pretrained model with msg: <All keys matched successfully>
+INFO:root:loaded pretrained encoder from epoch: 300
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:Dataloader created... iterations per epoch: 53
+INFO:root:Unfreezing encoder...
+INFO:root:Using AdamW
+INFO:root:Epoch 1
+Process Process-1:
+Traceback (most recent call last):
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/main.py", line 59, in process_main
+    eval_main(params['eval_name'], args_eval=params)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/scaffold.py", line 22, in main
+    return importlib.import_module(f'evals.{eval_name}.eval').main(
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_classification_frozen/eval.py", line 284, in main
+    train_acc, train_acc2, train_precision, train_recall, train_f1 = run_one_epoch(
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_classification_frozen/eval.py", line 435, in run_one_epoch
+    outputs = encoder(clips, clip_indices)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_classification_frozen/utils.py", line 124, in forward
+    outputs = self.model(x)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/src/models/vision_transformer.py", line 172, in forward
+    x = self.patch_embed(x)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/src/models/utils/patch_embed.py", line 56, in forward
+    x = self.proj(x).flatten(2).transpose(1, 2)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 610, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 605, in _conv_forward
+    return F.conv3d(
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 50.00 MiB. GPU 

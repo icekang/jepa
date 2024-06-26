@@ -434,13 +434,13 @@ def run_one_epoch(
                 else:
                     outputs = encoder(clips, clip_indices)
 
-            with torch.no_grad():
-                if not training:
+            if not training:
+                with torch.no_grad():
                     if attend_across_segments:
                         outputs = [classifier(o) for o in outputs]
                     else:
                         outputs = [[classifier(ost) for ost in os] for os in outputs]
-            if training:
+            else:
                 if attend_across_segments:
                     outputs = [classifier(o) for o in outputs]
                 else:
@@ -471,21 +471,25 @@ def run_one_epoch(
                 f1.update(outputs.max(dim=1).indices, labels)
                 top1_acc = float(AllReduce.apply(top1_acc))
                 top1_meter.update(top1_acc)
-            
-            print(f'{"Training" if training else "Validation"} min-max:', data[0][0][0].min(), data[0][0][0].max())
-            for o in outputs:
-                print(f'{"Training" if training else "Validation"}', 'Output', o.shape, o)
-            print(f'{"Training" if training else "Validation"}', 'Labels', labels.shape, labels)
+        
+        print(f'{"Training" if training else "Validation"} min-max:', data[0][0][0].min(), data[0][0][0].max())
+        for o in outputs:
+            print(f'{"Training" if training else "Validation"}', 'Output', o.shape, o)
+        print(f'{"Training" if training else "Validation"}', 'Labels', labels.shape, labels)
 
         if training:
             if use_bfloat16:
                 scaler.scale(loss).backward()
                 scaler.unscale_(optimizer)
+                if not freeze_encoder:
+                    torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(classifier.parameters(), 1.0)
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 loss.backward()
+                if not freeze_encoder:
+                    torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(classifier.parameters(), 1.0)
                 optimizer.step()
             optimizer.zero_grad()

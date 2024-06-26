@@ -1,0 +1,101 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/vitl16_cf_pres_16x2x3_from_vjepa_fold1.yaml
+INFO:root:loaded params...
+{   'data': {   'dataset_test': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_test.csv',
+                'dataset_train': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold1.csv',
+                'dataset_type': 'VideoDataset',
+                'dataset_val': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold1.csv',
+                'frame_step': 3,
+                'frames_per_clip': 128,
+                'num_classes': 2,
+                'num_segments': 1,
+                'num_views_per_segment': 1},
+    'eval_name': 'video_classification_frozen',
+    'nodes': 8,
+    'optimization': {   'attend_across_segments': True,
+                        'batch_size': 2,
+                        'final_lr': 0.0,
+                        'freeze_encoder': False,
+                        'lr': 0.001,
+                        'num_epochs': 150,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-latest.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': False,
+    'tag': 'cf-pres-from-vjepa-16x2x3-fold1',
+    'tasks_per_node': 8}
+Random port is ... 30227
+INFO:root:Rank: 0. Distributed training not available ProcessGroupNCCL is only supported with GPUs, no GPUs found!
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_classification_frozen
+INFO:root:SLURM vars not set (distributed training not available)
+INFO:root:Initialized (rank/world-size) 0/1
+INFO:root:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:root:loaded pretrained model with msg: <All keys matched successfully>
+INFO:root:loaded pretrained encoder from epoch: 300
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/jepa-latest.pth.tar
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:VideoDataset dataset created
+INFO:root:VideoDataset unsupervised data loader created
+INFO:root:Dataloader created... iterations per epoch: 53
+INFO:root:Unfreezing encoder...
+INFO:root:Using AdamW
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/amp/grad_scaler.py:131: UserWarning: torch.cuda.amp.GradScaler is enabled, but CUDA is not available.  Disabling.
+  warnings.warn(
+Process Process-1:
+Traceback (most recent call last):
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/gridsan/nchutisilp/.conda/envs/jepa/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/main.py", line 59, in process_main
+    eval_main(params['eval_name'], args_eval=params)
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/scaffold.py", line 22, in main
+    return importlib.import_module(f'evals.{eval_name}.eval').main(
+  File "/home/gridsan/nchutisilp/projects/jepa/evals/video_classification_frozen/eval.py", line 250, in main
+    classifier = DistributedDataParallel(classifier, static_graph=True)
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/nn/parallel/distributed.py", line 731, in __init__
+    self.process_group = _get_default_group()
+  File "/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/distributed/distributed_c10d.py", line 1008, in _get_default_group
+    raise ValueError(
+ValueError: Default process group has not been initialized, please make sure to call init_process_group.
