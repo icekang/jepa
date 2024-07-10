@@ -76,12 +76,13 @@ optimization:
   ipe: 300
   ipe_scale: 1.25
   clip_grad: 10.0
+  skip_resume_scheduler: true
   weight_decay: 0.04
-  final_weight_decay: 0.4
-  epochs: 600 # 300 + x
-  warmup: 40
-  start_lr: 0.0002
-  lr: 0.000625
+  final_weight_decay: 0.04
+  epochs: 150 # 300 + x
+  warmup: 0
+  start_lr: 0.00002
+  lr: 0.0000625
   final_lr: 1.0e-06
   ema:
   - 0.998

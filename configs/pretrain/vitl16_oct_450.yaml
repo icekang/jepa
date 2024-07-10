@@ -28,8 +28,8 @@ data_aug:
   - 1.0
   reprob: 0.0
 logging:
-  folder: /home/gridsan/nchutisilp/projects/jepa/jepa_ssl
-  write_tag: jepa_oct_450
+  folder: /home/gridsan/nchutisilp/projects/jepa/jepa_ssl_450
+  write_tag: jepa_oct
 loss:
   loss_exp: 1.0
   reg_coeff: 0.0
@@ -76,12 +76,13 @@ optimization:
   ipe: 300
   ipe_scale: 1.25
   clip_grad: 10.0
+  skip_resume_scheduler: true
   weight_decay: 0.04
-  final_weight_decay: 0.4
-  epochs: 750 # 300 + x
-  warmup: 40
-  start_lr: 0.0002
-  lr: 0.000625
+  final_weight_decay: 0.04
+  epochs: 300 # 300 + x
+  warmup: 0
+  start_lr: 0.00002
+  lr: 0.0000625
   final_lr: 1.0e-06
   ema:
   - 0.998

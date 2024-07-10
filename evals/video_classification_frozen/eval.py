@@ -247,6 +247,7 @@ def main(args_eval, resume_preempt=False):
         num_epochs=num_epochs,
         use_bfloat16=use_bfloat16,
         freeze_encoder=freeze_encoder)
+    encoder = DistributedDataParallel(encoder, static_graph=True)
     classifier = DistributedDataParallel(classifier, static_graph=True)
 
     # -- load training checkpoint
@@ -413,7 +414,6 @@ def run_one_epoch(
             wd_scheduler.step()
 
         with torch.cuda.amp.autocast(dtype=torch.float16, enabled=use_bfloat16):
-
             # Load data and put on GPU
             clips = [
                 [dij.to(device, non_blocking=True) for dij in di]  # iterate over spatial views of clip
@@ -448,9 +448,28 @@ def run_one_epoch(
 
             # Compute loss
             if attend_across_segments:
-                loss = sum([criterion(o, labels) for o in outputs]) / len(outputs)
+                losses = [criterion(o, labels) for o in outputs] 
+                non_nan_losses = [l for l in losses if not torch.isnan(l)]
+                if len(non_nan_losses) != len(losses):
+                    logger.info(f'Losses are nan [training {training}, iteration {itr}] using only {len(non_nan_losses)} out of {len(losses)} losses')
+                # if len(non_nan_losses) == 0:
+                #     raise ValueError(f'All losses are nan [training {training}, iteration {itr}]')
+                loss = sum(non_nan_losses) / (len(non_nan_losses) + 1e-6)
             else:
                 loss = sum([sum([criterion(ost, labels) for ost in os]) for os in outputs]) / len(outputs) / len(outputs[0])
+            # if torch.isnan(loss):
+            #     torch.save(data, 'nan_data.pth')
+            #     torch.save(outputs, 'nan_outputs.pth')
+            #     torch.save(encoder.state_dict(), 'nan_encoder.pth')
+            #     torch.save(classifier.state_dict(), 'nan_classifier.pth')
+            #     raise ValueError(f'Loss is nan [training {training}, iteration {itr}]')
+            # if torch.isinf(loss):
+            #     torch.save(data, 'inf_data.pth')
+            #     torch.save(outputs, 'inf_outputs.pth')
+            #     torch.save(encoder.state_dict(), 'inf_encoder.pth')
+            #     torch.save(classifier.state_dict(), 'inf_classifier.pth')
+            #     raise ValueError(f'Loss is inf [training {training}, iteration {itr}]')
+
             with torch.no_grad():
                 if attend_across_segments:
                     outputs = sum([F.softmax(o, dim=1) for o in outputs]) / len(outputs)
@@ -482,6 +501,7 @@ def run_one_epoch(
                 scaler.scale(loss).backward()
                 scaler.unscale_(optimizer)
                 if not freeze_encoder:
+                    torch.nn.utils.clip_grad_value_(encoder.parameters(), 10.0)
                     torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(classifier.parameters(), 1.0)
                 scaler.step(optimizer)
@@ -489,6 +509,7 @@ def run_one_epoch(
             else:
                 loss.backward()
                 if not freeze_encoder:
+                    torch.nn.utils.clip_grad_value_(encoder.parameters(), 10.0)
                     torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(classifier.parameters(), 1.0)
                 optimizer.step()

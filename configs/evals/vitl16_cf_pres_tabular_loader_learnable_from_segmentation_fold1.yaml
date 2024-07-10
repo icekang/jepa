@@ -1,0 +1,46 @@
+nodes: 8
+tasks_per_node: 8
+tag: cf-pres-from-segmentation-tabular
+eval_name: video_classification
+resume_checkpoint: false
+data:
+  fold: 1 # should change when doing different folds
+  tabular_data_directory: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data # SuperCloud
+  data_directory: /home/gridsan/nchutisilp/datasets/Unlabeled_OCT_by_CADx/Unlabeled_OCT_by_CADx/NiFTI/ # SuperCloud
+  # patch_size: [512, 512, 384]
+  patch_size: [224, 224, 125] # All images will be padded to 375 -> z-axis resample to 125 (every 3 frame) -> then bicubicly resized to 224, 224, 125
+  queue_max_length: 400
+  samples_per_volume: 4
+  num_workers: 5
+  batch_size: 2
+  num_classes: 2 # 0 and 1 for CF_PRES
+  input_modality: final # pre post final
+  output_modality: final # pre post final
+  output_metrics: [CF_PRES] # only one target is supported
+  nan_handling: drop
+  target_normalization: minmax
+  overfit: false
+optimization:
+  num_epochs: 20
+  resolution: 224
+  weight_decay: 0.01
+  lr: 0.001
+  start_lr: 0.001
+  final_lr: 0.0
+  warmup: 0.
+  use_bfloat16: true
+  freeze_encoder: false
+pretrain:
+  model_name: vit_large
+  checkpoint_key: target_encoder
+  clip_duration: null
+  frames_per_clip: 16
+  tubelet_size: 2
+  uniform_power: true
+  use_silu: false
+  tight_silu: false
+  use_sdpa: true
+  patch_size: 16
+  folder: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0
+  checkpoint: jepa-best.pth.tar  # name of pretrained model file inside folder
+  write_tag: jepa

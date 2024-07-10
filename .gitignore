@@ -5,5 +5,5 @@ build/
 dist/
 */**/visualization/
 pretrain_models/
-jepa_ssl/
+*jepa_ssl*/
 jepa_ssl_vith/

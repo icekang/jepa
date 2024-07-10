@@ -1,0 +1,42 @@
+nodes: 8
+tasks_per_node: 8
+tag: cf-pres-from-segmentation-16x2x3-fold2-high-batch
+eval_name: video_classification_frozen
+resume_checkpoint: false
+data:
+  dataset_train: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_train_fold2.csv
+  dataset_val: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_val_fold2.csv
+  dataset_test: /home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data/cf_pres_test.csv
+  dataset_type: VideoDataset
+  num_classes: 2
+  frames_per_clip: 32
+  num_segments: 1
+  num_views_per_segment: 1
+  frame_step: 12
+
+optimization:
+  attend_across_segments: true
+  num_epochs: 150
+  resolution: 224
+  batch_size: 8
+  weight_decay: 0.01
+  lr: 0.001
+  start_lr: 0.001
+  final_lr: 0.0
+  warmup: 0.
+  use_bfloat16: true
+  freeze_encoder: false
+pretrain:
+  model_name: vit_large
+  checkpoint_key: target_encoder
+  clip_duration: null
+  frames_per_clip: 16
+  tubelet_size: 2
+  uniform_power: true
+  use_silu: false
+  tight_silu: false
+  use_sdpa: true
+  patch_size: 16
+  folder: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0
+  checkpoint: jepa-best.pth.tar  # name of pretrained model file inside folder
+  write_tag: jepa

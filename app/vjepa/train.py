@@ -150,6 +150,7 @@ def main(args, resume_preempt=False):
     ema = cfgs_opt.get('ema')
     betas = cfgs_opt.get('betas', (0.9, 0.999))
     eps = cfgs_opt.get('eps', 1.e-8)
+    skip_resume_scheduler = cfgs_opt.get('skip_resume_scheduler', False)
 
     # -- LOGGING
     cfgs_logging = args.get('logging')
@@ -319,11 +320,13 @@ def main(args, resume_preempt=False):
             target_encoder=target_encoder,
             opt=optimizer,
             scaler=scaler)
-        for _ in range(start_epoch * ipe):
-            scheduler.step()
-            wd_scheduler.step()
-            next(momentum_scheduler)
-            mask_collator.step()
+
+        if not skip_resume_scheduler:
+            for _ in range(start_epoch * ipe):
+                scheduler.step()
+                wd_scheduler.step()
+                next(momentum_scheduler)
+                mask_collator.step()
 
     def save_checkpoint(epoch, path):
         if rank != 0:
@@ -448,11 +451,24 @@ def main(args, resume_preempt=False):
                 def reg_fn(z):
                     return sum([torch.sqrt(zi.var(dim=1) + 0.0001) for zi in z]) / len(z)
 
+                def save_prediction_plot(z, h, epoch, itr):
+                    save_zh_path = os.path.join(folder, f'pred-epoch{epoch}-itr{itr}.png')
+                    first_z = z[0][0, 0].detach().to(torch.float16).cpu().numpy()
+                    first_h = h[0][0, 0].detach().to(torch.float16).cpu().numpy()
+                    import matplotlib.pyplot as plt
+                    plt.plot(range(1024), first_h, label='h')
+                    plt.plot(range(1024), first_z, label='z')
+                    plt.legend()
+                    plt.savefig(save_zh_path)
+                    plt.close('all')
+
                 # Step 1. Forward
                 loss_jepa, loss_reg = 0., 0.
                 with torch.cuda.amp.autocast(dtype=dtype, enabled=mixed_precision):
                     h = forward_target(clips)
                     z = forward_context(clips, h)
+                    if rank == 0:
+                        save_prediction_plot(z, h, epoch, itr)
                     loss_jepa = loss_fn(z, h)  # jepa prediction loss
                     pstd_z = reg_fn(z)  # predictor variance across patches
                     loss_reg += torch.mean(F.relu(1.-pstd_z))

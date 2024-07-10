@@ -1,0 +1,473 @@
+/home/gridsan/nchutisilp/.conda/envs/jepa/bin/python
+INFO:root:called-params configs/evals/vitl16_cf_pres_tabular_loader_learnable_from_segmentation_fold0.yaml
+INFO:root:loaded params...
+{   'data': {   'batch_size': 2,
+                'data_directory': '/home/gridsan/nchutisilp/datasets/Unlabeled_OCT_by_CADx/Unlabeled_OCT_by_CADx/NiFTI/',
+                'fold': 0,
+                'input_modality': 'final',
+                'nan_handling': 'drop',
+                'num_classes': 2,
+                'num_workers': 5,
+                'output_metrics': ['CF_PRES'],
+                'output_modality': 'final',
+                'overfit': False,
+                'patch_size': [224, 224, 125],
+                'queue_max_length': 400,
+                'samples_per_volume': 4,
+                'tabular_data_directory': '/home/gridsan/nchutisilp/projects/ModelsGenesis/notebooks/tabular_data',
+                'target_normalization': 'minmax'},
+    'eval_name': 'video_classification',
+    'nodes': 8,
+    'optimization': {   'final_lr': 0.0,
+                        'freeze_encoder': False,
+                        'lr': 0.001,
+                        'num_epochs': 20,
+                        'resolution': 224,
+                        'start_lr': 0.001,
+                        'use_bfloat16': True,
+                        'warmup': 0.0,
+                        'weight_decay': 0.01},
+    'pretrain': {   'checkpoint': 'jepa-best.pth.tar',
+                    'checkpoint_key': 'target_encoder',
+                    'clip_duration': None,
+                    'folder': '/home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0',
+                    'frames_per_clip': 16,
+                    'model_name': 'vit_large',
+                    'patch_size': 16,
+                    'tight_silu': False,
+                    'tubelet_size': 2,
+                    'uniform_power': True,
+                    'use_sdpa': True,
+                    'use_silu': False,
+                    'write_tag': 'jepa'},
+    'resume_checkpoint': False,
+    'tag': 'cf-pres-from-segmentation-tabular',
+    'tasks_per_node': 8}
+Random port is ... 15773
+INFO:root:Running... (rank: 0/1)
+INFO:root:Running evaluation: video_classification
+INFO:root:Initialized (rank/world-size) 0/1
+INFO:root:Loading pretrained model from /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0/jepa-best.pth.tar
+VisionTransformer(
+  (patch_embed): PatchEmbed3D(
+    (proj): Conv3d(3, 1024, kernel_size=(2, 16, 16), stride=(2, 16, 16))
+  )
+  (blocks): ModuleList(
+    (0-23): 24 x Block(
+      (norm1): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (attn): Attention(
+        (qkv): Linear(in_features=1024, out_features=3072, bias=True)
+        (attn_drop): Dropout(p=0.0, inplace=False)
+        (proj): Linear(in_features=1024, out_features=1024, bias=True)
+        (proj_drop): Dropout(p=0.0, inplace=False)
+      )
+      (norm2): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+      (mlp): MLP(
+        (fc1): Linear(in_features=1024, out_features=4096, bias=True)
+        (act): GELU(approximate='none')
+        (fc2): Linear(in_features=4096, out_features=1024, bias=True)
+        (drop): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (norm): LayerNorm((1024,), eps=1e-06, elementwise_affine=True)
+)
+INFO:root:loaded pretrained model with msg: <All keys matched successfully>
+INFO:root:loaded pretrained encoder from epoch: 500
+ path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0/jepa-best.pth.tar
+INFO:root:Dataloader created... iterations per epoch: 210
+INFO:root:Unfreezing encoder...
+INFO:root:Using AdamW
+INFO:root:Epoch 1
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+INFO:root:[    0] 1.000% (loss: 0.358) [mem: 2.43e+04]
+INFO:root:[   20] 0.548% (loss: 3.352) [mem: 2.67e+04]
+INFO:root:[   40] 0.585% (loss: 10.953) [mem: 2.67e+04]
+INFO:root:[   60] 0.574% (loss: 7.180) [mem: 2.67e+04]
+INFO:root:[   80] 0.580% (loss: 1.807) [mem: 2.67e+04]
+INFO:root:[  100] 0.554% (loss: 0.006) [mem: 2.67e+04]
+INFO:root:[  120] 0.545% (loss: 10.742) [mem: 2.67e+04]
+INFO:root:[  140] 0.528% (loss: 6.750) [mem: 2.67e+04]
+INFO:root:[  160] 0.522% (loss: 0.694) [mem: 2.67e+04]
+INFO:root:[  180] 0.528% (loss: 0.657) [mem: 2.67e+04]
+INFO:root:[  200] 0.537% (loss: 0.084) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 130, Training ones: 260 / 290
+INFO:root:[    0] 1.000% (loss: 0.179) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 0, Training ones: 20 / 26
+INFO:root:[    1] train: 0.538% test: 0.769%
+INFO:root:Accuracy: 0.53810, Precision: 0.61379, Recall: 0.68462, F1: 0.64727
+INFO:root:Val Accuracy: 0.76923, Precision: 0.76923, Recall: 1.00000, F1: 0.86957
+INFO:root:New best F1: 0.86957 improved from 0.0, saving to /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0/video_classification_frozen/cf-pres-from-segmentation-tabular/jepa-best.pth.tar
+INFO:root:Epoch 2
+INFO:root:[    0] 0.500% (loss: 0.994) [mem: 2.67e+04]
+INFO:root:[   20] 0.476% (loss: 2.117) [mem: 2.67e+04]
+INFO:root:[   40] 0.463% (loss: 1.639) [mem: 2.67e+04]
+INFO:root:[   60] 0.434% (loss: 2.223) [mem: 2.67e+04]
+INFO:root:[   80] 0.463% (loss: 1.067) [mem: 2.67e+04]
+INFO:root:[  100] 0.490% (loss: 0.754) [mem: 2.67e+04]
+INFO:root:[  120] 0.496% (loss: 1.309) [mem: 2.67e+04]
+INFO:root:[  140] 0.518% (loss: 3.225) [mem: 2.67e+04]
+INFO:root:[  160] 0.540% (loss: 0.047) [mem: 2.67e+04]
+INFO:root:[  180] 0.541% (loss: 16.406) [mem: 2.67e+04]
+INFO:root:[  200] 0.540% (loss: 1.198) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 134, Training ones: 260 / 286
+INFO:root:[    0] 1.000% (loss: 0.045) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 0, Training ones: 20 / 26
+INFO:root:[    2] train: 0.538% test: 0.769%
+INFO:root:Accuracy: 0.53810, Precision: 0.61538, Recall: 0.67692, F1: 0.64469
+INFO:root:Val Accuracy: 0.76923, Precision: 0.76923, Recall: 1.00000, F1: 0.86957
+INFO:root:F1: 0.86957 did not improve from 0.8695651888847351
+INFO:root:Epoch 3
+INFO:root:[    0] 0.000% (loss: 3.127) [mem: 2.67e+04]
+INFO:root:[   20] 0.571% (loss: 4.109) [mem: 2.67e+04]
+INFO:root:[   40] 0.585% (loss: 17.180) [mem: 2.67e+04]
+INFO:root:[   60] 0.566% (loss: 0.695) [mem: 2.67e+04]
+INFO:root:[   80] 0.593% (loss: 0.770) [mem: 2.67e+04]
+INFO:root:[  100] 0.594% (loss: 59.812) [mem: 2.67e+04]
+INFO:root:[  120] 0.587% (loss: 3.785) [mem: 2.67e+04]
+INFO:root:[  140] 0.574% (loss: 0.727) [mem: 2.67e+04]
+INFO:root:[  160] 0.568% (loss: 0.963) [mem: 2.67e+04]
+INFO:root:[  180] 0.558% (loss: 0.550) [mem: 2.67e+04]
+INFO:root:[  200] 0.547% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 164, Training ones: 260 / 256
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    3] train: 0.548% test: 0.231%
+INFO:root:Accuracy: 0.54762, Precision: 0.63672, Recall: 0.62692, F1: 0.63178
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 4
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.488% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.459% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.438% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.396% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.409% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.401% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.401% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.401% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.391% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    4] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 5
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.310% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.354% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.370% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.376% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.368% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.369% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.385% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.388% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    5] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 6
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.429% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.354% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.376% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.368% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.383% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.373% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.388% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    6] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 7
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.476% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.427% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.410% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.407% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.376% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.366% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.370% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.371% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    7] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 8
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.405% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.426% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.407% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.406% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.397% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.379% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.371% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    8] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 9
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.476% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.378% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.385% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.383% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.361% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.368% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.369% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.366% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.365% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.371% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[    9] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 10
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.476% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.361% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.340% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.347% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.379% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.391% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.395% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.378% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   10] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 11
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.286% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.378% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.369% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.346% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.356% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.365% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.382% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.387% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.381% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   11] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 12
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.378% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.377% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.389% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.396% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.370% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.378% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.381% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   12] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 13
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.262% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.329% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.369% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.386% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.387% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.385% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.368% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   13] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 14
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.357% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.361% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.361% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.376% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.387% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.391% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.391% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   14] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 15
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.383% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.376% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.383% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.394% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.392% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.388% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   15] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 16
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.429% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.402% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.370% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.409% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.411% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.394% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.381% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   16] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 17
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.333% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.415% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.426% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.407% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.396% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.390% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.388% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.381% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   17] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 18
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.262% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.329% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.336% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.364% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.371% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.397% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.394% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.388% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.387% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.388% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   18] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 19
+INFO:root:[    0] 1.000% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.357% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.366% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.426% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.370% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.356% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.351% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.369% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.357% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.367% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.368% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   19] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:Epoch 20
+INFO:root:[    0] 0.500% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   20] 0.381% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   40] 0.415% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   60] 0.426% (loss: nan) [mem: 2.67e+04]
+INFO:root:[   80] 0.407% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  100] 0.396% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  120] 0.393% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  140] 0.397% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  160] 0.388% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  180] 0.384% (loss: nan) [mem: 2.67e+04]
+INFO:root:[  200] 0.378% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Training zeros: 160 / 420, Training ones: 260 / 0
+INFO:root:[    0] 0.000% (loss: nan) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 6 / 26, Training ones: 20 / 0
+INFO:root:[   20] train: 0.381% test: 0.231%
+INFO:root:Accuracy: 0.38095, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:Val Accuracy: 0.23077, Precision: 0.00000, Recall: 0.00000, F1: 0.00000
+INFO:root:F1: 0.00000 did not improve from 0.8695651888847351
+INFO:root:loaded best validation dice from epoch 1 with f1: 0.8695651888847351
+INFO:root:loaded pretrained encoder from epoch 1 with msg: <All keys matched successfully>
+INFO:root:loaded pretrained classifier from epoch 1 with msg: <All keys matched successfully>
+INFO:root:loaded optimizers from epoch 1
+INFO:root:read-path: /home/gridsan/nchutisilp/projects/jepa/pretrain_models/video_segmentation/calcium_oct_attentive_aug_resample_fold0/video_classification_frozen/cf-pres-from-segmentation-tabular/jepa-best.pth.tar
+INFO:root:Loaded best model with F1: 0.86957
+/home/gridsan/nchutisilp/.local/lib/python3.9/site-packages/torch/backends/cuda/__init__.py:342: FutureWarning: torch.backends.cuda.sdp_kernel() is deprecated. In the future, this context manager will be removed. Please see, torch.nn.attention.sdpa_kernel() for the new context manager, with updated signature.
+  warnings.warn(
+INFO:root:[    0] 0.500% (loss: 0.982) [mem: 2.67e+04]
+[Label/Prediction] Validation zeros: 12 / 0, Training ones: 21 / 33
+INFO:root:Test Accuracy: 0.63636, Precision: 0.63636, Recall: 1.00000, F1: 0.77778
