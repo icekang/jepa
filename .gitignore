@@ -7,3 +7,5 @@ dist/
 pretrain_models/
 *jepa_ssl*/
 jepa_ssl_vith/
+.ipynb_checkpoints/
+128_stent_segmentations_LaW_prediction/
